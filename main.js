@@ -1,6 +1,6 @@
 const { ethers } = require('ethers')
 const utils = require('./utils.js')
-const provider = new ethers.providers.WebSocketProvider('wss://proportionate-restless-arm.discover.quiknode.pro/8ffd3e105db61bb59142e25c4321f73c5395212d/');
+const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/2a6debe65f1641d1a4d86af1c34a7e41');
 const { Telegraf, Extra, Markup } = require('telegraf');
 const { Pool } = require('pg');
 const UNISWAP_FACTORY_ADDRESS = require("./uniswap_factory_address.js");

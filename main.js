@@ -3,6 +3,14 @@ const utils = require('./utils.js')
 const provider = new ethers.providers.WebSocketProvider('wss://proportionate-restless-arm.discover.quiknode.pro/8ffd3e105db61bb59142e25c4321f73c5395212d/');
 const { Telegraf, Extra, Markup } = require('telegraf');
 const { Pool } = require('pg');
+const UNISWAP_FACTORY_ADDRESS = require("./uniswap_factory_address.js");
+const UNISWAP_ROUTER_ABI = require("./uniswap_router_abi.js");
+const UNISWAP_FACTORY_ABI = require("./uniswap_factory_abi.js");
+const UNISWAP_PAIR_ABI = require("./uniswap_pair_abi.js");
+const INTERFACE_UNISWAP = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
+const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+const MIN_ABI = require("./min_abi.js");
+
 //uniswap router INTERFACE not contract
 
 const writer = new Pool({
@@ -25,8 +33,22 @@ createTable()
 
 const bot = new Telegraf('5787240482:AAGT0lM1T15cOrSBdscUm04nYPquTbx7LmY')
 
-//create fuinction to get pending transactions
+function parseMarketCap(marketCap) {
+    const dotIndex = marketCap.indexOf('.');
+    if (dotIndex === 1) {
+        return marketCap.slice(0, 3) + 'k';
+    } else if (dotIndex === 2) {
+        return marketCap.slice(0, 4) + 'k';
+    } else if (dotIndex === 3) {
+        return marketCap.slice(0, 5) + 'k';
+    }
+}
+
+//create function to get pending transactions
 bot.command('startdarkness', async (ctx) => {
+    //if the command message was not sent by the bot owner, ignore the message
+    if (ctx.message.from.id != 2129042539)
+        return
     console.log('start')
     // ctx.chat.id = -1001848648579
     provider.on('block', async (blockNumber) => {
@@ -39,6 +61,11 @@ bot.command('startdarkness', async (ctx) => {
                     console.log(nonce)
                     if (nonce <= 5) {
                         let token = await utils.parseTransaction(pendingtxs.transactions[i].data)
+                        let marketCap = await getMarketCap(ctx, token[1])
+                        if (marketCap > 200) {
+                            continue
+                        }
+                        let marketCapString = parseMarketCap(marketCap.toString())
                         ctx.tokenName = token[0]
                         ctx.tokenAddress = token[1]
                         ctx.walletAddress = pendingtxs.transactions[i].from
@@ -47,9 +74,11 @@ bot.command('startdarkness', async (ctx) => {
                             token[0],
                             token[1],
                             pendingtxs.transactions[i].from,
-                            nonce
+                            nonce,
+                            marketCapString
                         )
-
+                        if (text == 0)
+                            continue
                         callback(ctx, text)
                     }
 
@@ -66,19 +95,33 @@ bot.command('startdarkness', async (ctx) => {
 
 // 📂 EOA: 0xB13fD5823018b336CD20ab25Ddc8E5cee1405CCc
 // 🔖 TX:     0 transactions
-async function mount_text(ctx, tokenName, tokenAddress, from, nonce) {
+async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString) {
     createOrUpdate(tokenAddress)
     let amount = await queryAmount(tokenAddress)
-    return `${ctx.tokenName}    <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nTransactions: ${nonce}`
+    if (amount > 5)
+        return 0
+    return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nTransactions: ${nonce}`
 }
 
 async function callback(ctx, message) {
-    message = await ctx.replyWithHTML({text: message}, reply_markup=Markup.inlineKeyboard([
-        Markup.button.url('Etherscan', `https://etherscan.io/token/${ctx.tokenAddress}`),
-        Markup.button.url('Wallet', `https://etherscan.io/address/${ctx.walletAddress}`),
-        Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
-        Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`),
-    ]))
+    message = await ctx.replyWithHTML(
+        { text: message }, 
+        reply_markup = Markup.inlineKeyboard(
+            [
+                [
+                    Markup.button.url('Etherscan', `https://etherscan.io/token/${ctx.tokenAddress}`),
+                    Markup.button.url('Wallet', `https://etherscan.io/address/${ctx.walletAddress}`),
+                    Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
+                    Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
+                ],
+                [
+                    Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
+                    Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
+                    Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
+                ]
+            ]
+        )
+    )
 }
 
 async function createOrUpdate(tokenName) {
@@ -117,40 +160,43 @@ async function queryAmount(tokenName) {
         console.error('Error executing query:', error);
     }
 }
-
-async function getLiquidity(tokenA) {
+async function getMarketCap(ctx, tokenA) {
     // Connect to the Ethereum network
     // Create an instance of the UniswapV2Factory contract
     const factory = new ethers.Contract(
-      UNISWAP_FACTORY_ADDRESS,
-      UNISWAP_FACTORY_ABI,
-      provider
+        UNISWAP_FACTORY_ADDRESS,
+        UNISWAP_FACTORY_ABI,
+        provider
     );
-  
+    // Get the address of the liquidity pool from the factory for the given token pair
+    const liquidityPoolAddress = await factory.getPair(tokenA, WETH_ADDRESS);
+
     if (liquidityPoolAddress == ethers.constants.AddressZero)
-      return 0
+        return 0
+    ctx.pairAddress = liquidityPoolAddress
     // Create an instance of the UniswapV2Pair contract
     const liquidityPool = new ethers.Contract(
-      liquidityPoolAddress,
-      UNISWAP_PAIR_ABI,
-      provider
+        liquidityPoolAddress,
+        UNISWAP_PAIR_ABI,
+        provider
     );
     // Get the liquidity pool address for the given token pair
     let minContract = new ethers.Contract(tokenA, MIN_ABI, provider)
     // Get the total liquidity in the pool
     const bnLiquidity = await liquidityPool.getReserves();
+    let decimals = await minContract.decimals()
     let token0 = await liquidityPool.token0()
-    let which = token0.toLowerCase() != xeth
+    let which = token0.toLowerCase() != WETH_ADDRESS
     let nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
-  
-    let pricePerETH = which ? parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatEther(bnLiquidity[1])))
-      :
-      parseFloat(ethers.utils.formatEther(bnLiquidity[1])) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
-  
-    let totalSupply = ethers.utils.formatEther(await minContract.totalSupply())
-    let mc = totalSupply * (pricePerETH) * 1900 / 100
-  
-    return mc
+
+    let pricePerETH = which ? parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
+        :
+        parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
+
+    let totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
+    console.log(pricePerETH)
+    let mc = totalSupply * (pricePerETH) * 1900 / 1000
+    return mc.toString().slice(0, 5)
 }
 
 

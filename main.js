@@ -10,7 +10,7 @@ const UNISWAP_PAIR_ABI = require("./uniswap_pair_abi.js");
 const INTERFACE_UNISWAP = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
 const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const MIN_ABI = require("./min_abi.js");
-
+const etherscan = new ethers.providers.EtherscanProvider('homestead', 'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP');
 //uniswap router INTERFACE not contract
 
 const writer = new Pool({
@@ -45,7 +45,7 @@ function parseMarketCap(marketCap) {
 }
 
 //create function to get pending transactions
-bot.command('startdarkness', async (ctx) => {
+bot.command('summondarkness', async (ctx) => {
     //if the command message was not sent by the bot owner, ignore the message
     if (ctx.message.from.id != 2129042539)
         return
@@ -56,10 +56,18 @@ bot.command('startdarkness', async (ctx) => {
         for (let i = 0; i < pendingtxs.transactions.length; i++) {
             try {
                 if (pendingtxs.transactions[i].to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d') {
+                    let diff = 0
+                    let txs = await etherscan.getHistory(pendingtxs.transactions[i].from)
+                    let timestamp = 0
+                    for (j = 0; j < txs.length; j++) {
+                        if (txs[j].to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d') {
+                            timestamp = utils.unixTimeToDays(txs[j].timestamp)
+                            break
+                        }
+                    }
                     //get the nonce for each from address
                     let nonce = await provider.getTransactionCount(pendingtxs.transactions[i].from)
-                    console.log(nonce)
-                    if (nonce <= 5) {
+                    if (nonce <= 5 || diff >= 1) {
                         let token = await utils.parseTransaction(pendingtxs.transactions[i].data)
                         let marketCap = await getMarketCap(ctx, token[1])
                         if (marketCap > 200) {
@@ -75,7 +83,8 @@ bot.command('startdarkness', async (ctx) => {
                             token[1],
                             pendingtxs.transactions[i].from,
                             nonce,
-                            marketCapString
+                            marketCapString,
+                            diff,
                         )
                         if (text == 0)
                             continue
@@ -100,12 +109,12 @@ async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapSt
     let amount = await queryAmount(tokenAddress)
     if (amount > 5)
         return 0
-    return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nTransactions: ${nonce}`
+    return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nLast buy: ${diff} days ago\n Transactions: ${nonce}`
 }
 
 async function callback(ctx, message) {
     message = await ctx.replyWithHTML(
-        { text: message }, 
+        { text: message },
         reply_markup = Markup.inlineKeyboard(
             [
                 [
@@ -195,7 +204,7 @@ async function getMarketCap(ctx, tokenA) {
 
     let totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
     console.log(pricePerETH)
-    let mc = totalSupply * (pricePerETH) * 1900 / 1000
+    let mc = totalSupply * (pricePerETH) * 1870 / 1000
     return mc.toString().slice(0, 5)
 }
 

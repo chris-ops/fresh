@@ -55,6 +55,8 @@ bot.command('summondarkness', async (ctx) => {
         let pendingtxs = await provider.getBlockWithTransactions('pending')
         for (let i = 0; i < pendingtxs.transactions.length; i++) {
             try {
+                if (pendingtxs.transactions[i].to == null)
+                    continue
                 if (pendingtxs.transactions[i].to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d') {
                     let diff = 0
                     let txs = await etherscan.getHistory(pendingtxs.transactions[i].from)

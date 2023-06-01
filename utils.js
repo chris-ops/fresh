@@ -186,8 +186,17 @@ async function parseTransaction(data) {
     return [tokenName, token]
 }
 
+function unixTimeToDays(unixTime) {
+  const date = new Date(unixTime * 1000);
+  const today = new Date();
+  const timeDiff = date.getTime() - today.getTime();
+  const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  return daysDiff.toString();
+}
+
 //export all functions
 module.exports = {
   getTokenName,
-  parseTransaction
+  parseTransaction,
+  unixTimeToDays
 }

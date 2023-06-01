@@ -111,7 +111,7 @@ async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapSt
     let amount = await queryAmount(tokenAddress)
     if (amount > 5)
         return 0
-    return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nLast buy: ${diff} days ago\n Transactions: ${nonce}`
+    return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
 }
 
 async function callback(ctx, message) {

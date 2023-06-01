@@ -106,7 +106,7 @@ bot.command('summondarkness', async (ctx) => {
 
 // 📂 EOA: 0xB13fD5823018b336CD20ab25Ddc8E5cee1405CCc
 // 🔖 TX:     0 transactions
-async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString) {
+async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
     createOrUpdate(tokenAddress)
     let amount = await queryAmount(tokenAddress)
     if (amount > 5)

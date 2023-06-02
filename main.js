@@ -51,7 +51,7 @@ bot.command('summondarkness', async (ctx) => {
         return
     console.log('start')
     // ctx.chat.id = -1001848648579
-    provider.on('block', async (blockNumber) => {
+    let listener = provider.on('block', async (blockNumber) => {
         let pendingtxs = await provider.getBlockWithTransactions('pending')
         for (let i = 0; i < pendingtxs.transactions.length; i++) {
             try {

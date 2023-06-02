@@ -56,15 +56,15 @@ bot.command('summondarkness', async (ctx) => {
         for (let i = 0; i < pendingtxs.transactions.length; i++) {
             try {
                 let diff = 0
-                    //if (pendingtxs.transactions[i].to == null)
-                    // continue
-                    // if (pendingtxs.transactions[i].to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d') {
+                    if (pendingtxs.transactions[i].to == null)
+                    continue
+                    if (pendingtxs.transactions[i].to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d') {
                     // let txs = await etherscan.getHistory(pendingtxs.transactions[i].from)
                     // let timestamp = 0
                     // for (j = 0; j < txs.length; j++) {
                     // 	if (txs[j].to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d') {
                     // 		timestamp = utils.unixTimeToDays(txs[j].timestamp)
-                    // 		break//
+                    // 		break
                     // 	}
                     // }
                     //get the nonce for each from address
@@ -91,10 +91,6 @@ bot.command('summondarkness', async (ctx) => {
                         if (text == 0)
                             continue
                         callback(ctx, text)
-                    }
-                    catch (error) {
-                        console.log(error)
-                        continue
                     }
                 }
             } catch (error) {

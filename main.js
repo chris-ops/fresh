@@ -92,7 +92,7 @@ bot.command('summondarkness', async (ctx) => {
                             continue
                         callback(ctx, text)
                     }
-                    } catch (error) {
+                    catch (error) {
                         console.log(error)
                         continue
                     }

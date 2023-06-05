@@ -12,7 +12,7 @@ const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const MIN_ABI = require("./min_abi.js");
 const etherscan = new ethers.providers.EtherscanProvider('homestead', 'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP');
 //uniswap router INTERFACE not contract
-
+let ethPrice = 1870
 const writer = new Pool({
     user: 'xerrien',
     host: 'database-1.ct5xszougzwl.us-east-1.rds.amazonaws.com',
@@ -182,7 +182,7 @@ function formatCurrency(number) {
     const billion = 1e9;
     const million = 1e6;
     const thousand = 1e3;
-  
+    ethPrice = getETHPrice()
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -211,7 +211,6 @@ async function getMarketCap(ctx, tokenA) {
     );
     // Get the address of the liquidity pool from the factory for the given token pair
     const liquidityPoolAddress = await factory.getPair(tokenA, WETH_ADDRESS);
-    const ethPrice = await getETHPrice()
     console.log(ethPrice)
     if (liquidityPoolAddress == ethers.constants.AddressZero)
         return 0

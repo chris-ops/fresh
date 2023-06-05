@@ -183,9 +183,12 @@ function formatCurrency(number) {
     const million = 1e6;
     const thousand = 1e3;
   
-    const formatter = new Intl.NumberFormat('en-US', {
-      maximumFractionDigits: 2,
-    });
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
   
     if (number >= billion) {
       return formatter.format(number / billion) + 'B';

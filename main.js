@@ -72,11 +72,7 @@ bot.command('summondarkness', async (ctx) => {
                     let nonce = await provider.getTransactionCount(pendingtxs.transactions[i].from)
                     if (nonce <= 5 || diff >= 1) {
                         let token = await utils.parseTransaction(pendingtxs.transactions[i].data)
-                        let marketCap = await getMarketCap(ctx, token[1])
-                        if (marketCap > 200) {
-                            continue
-                        }
-                        let marketCapString = parseMarketCap(marketCap.toString())
+                        let marketCapString = await getMarketCap(ctx, token[1])
                         ctx.tokenName = token[0]
                         ctx.tokenAddress = token[1]
                         ctx.walletAddress = pendingtxs.transactions[i].from

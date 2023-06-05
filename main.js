@@ -12,7 +12,7 @@ const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const MIN_ABI = require("./min_abi.js");
 const etherscan = new ethers.providers.EtherscanProvider('homestead', 'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP');
 //uniswap router INTERFACE not contract
-let ethPrice = 1870
+
 const writer = new Pool({
     user: 'xerrien',
     host: 'database-1.ct5xszougzwl.us-east-1.rds.amazonaws.com',
@@ -72,7 +72,11 @@ bot.command('summondarkness', async (ctx) => {
                     let nonce = await provider.getTransactionCount(pendingtxs.transactions[i].from)
                     if (nonce <= 5 || diff >= 1) {
                         let token = await utils.parseTransaction(pendingtxs.transactions[i].data)
-                        let marketCapString = await getMarketCap(ctx, token[1])
+                        let marketCap = await getMarketCap(ctx, token[1])
+                        if (marketCap > 200) {
+                            continue
+                        }
+                        let marketCapString = parseMarketCap(marketCap.toString())
                         ctx.tokenName = token[0]
                         ctx.tokenAddress = token[1]
                         ctx.walletAddress = pendingtxs.transactions[i].from
@@ -169,34 +173,6 @@ async function queryAmount(tokenName) {
         console.error('Error executing query:', error);
     }
 }
-async function getETHPrice() {
-    let price = await etherscan.getEtherPrice()
-    return price
-}
-
-function formatCurrency(number) {
-    const billion = 1e9;
-    const million = 1e6;
-    const thousand = 1e3;
-    ethPrice = getETHPrice()
-  const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-  
-    if (number >= billion) {
-      return formatter.format(number / billion) + 'B';
-    } else if (number >= million) {
-      return formatter.format(number / million) + 'M';
-    } else if (number >= thousand) {
-      return formatter.format(number / thousand) + 'k';
-    } else {
-      return formatter.format(number);
-    }
-  }
-
 async function getMarketCap(ctx, tokenA) {
     // Connect to the Ethereum network
     // Create an instance of the UniswapV2Factory contract
@@ -207,7 +183,7 @@ async function getMarketCap(ctx, tokenA) {
     );
     // Get the address of the liquidity pool from the factory for the given token pair
     const liquidityPoolAddress = await factory.getPair(tokenA, WETH_ADDRESS);
-    console.log(ethPrice)
+
     if (liquidityPoolAddress == ethers.constants.AddressZero)
         return 0
     ctx.pairAddress = liquidityPoolAddress
@@ -224,12 +200,16 @@ async function getMarketCap(ctx, tokenA) {
     let decimals = await minContract.decimals()
     let token0 = await liquidityPool.token0()
     let which = token0.toLowerCase() != WETH_ADDRESS
+    let nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
 
-    let pricePerETH = bnLiquidity[which ? 1 : 0] / bnLiquidity[which ? 0 : 1]
+    let pricePerETH = which ? parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
+        :
+        parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
+
     let totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
-    let mc = totalSupply * (pricePerETH) * ethPrice
-    mc = formatCurrency(mc.toFixed(0))
-    return mc.toString()
+    console.log(pricePerETH)
+    let mc = totalSupply * (pricePerETH) * 1870 / 1000
+    return mc.toString().slice(0, 5)
 }
 
 

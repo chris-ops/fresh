@@ -173,6 +173,31 @@ async function queryAmount(tokenName) {
         console.error('Error executing query:', error);
     }
 }
+async function getETHPrice() {
+    let price = await etherscan.getEtherPrice()
+    return price
+}
+
+function formatCurrency(number) {
+    const billion = 1e9;
+    const million = 1e6;
+    const thousand = 1e3;
+  
+    const formatter = new Intl.NumberFormat('en-US', {
+      maximumFractionDigits: 2,
+    });
+  
+    if (number >= billion) {
+      return formatter.format(number / billion) + 'B';
+    } else if (number >= million) {
+      return formatter.format(number / million) + 'M';
+    } else if (number >= thousand) {
+      return formatter.format(number / thousand) + 'k';
+    } else {
+      return formatter.format(number);
+    }
+  }
+
 async function getMarketCap(ctx, tokenA) {
     // Connect to the Ethereum network
     // Create an instance of the UniswapV2Factory contract
@@ -183,7 +208,8 @@ async function getMarketCap(ctx, tokenA) {
     );
     // Get the address of the liquidity pool from the factory for the given token pair
     const liquidityPoolAddress = await factory.getPair(tokenA, WETH_ADDRESS);
-
+    const ethPrice = await getETHPrice()
+    console.log(ethPrice)
     if (liquidityPoolAddress == ethers.constants.AddressZero)
         return 0
     ctx.pairAddress = liquidityPoolAddress
@@ -200,16 +226,12 @@ async function getMarketCap(ctx, tokenA) {
     let decimals = await minContract.decimals()
     let token0 = await liquidityPool.token0()
     let which = token0.toLowerCase() != WETH_ADDRESS
-    let nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
 
-    let pricePerETH = which ? parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
-        :
-        parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
-
+    let pricePerETH = bnLiquidity[which ? 1 : 0] / bnLiquidity[which ? 0 : 1]
     let totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
-    console.log(pricePerETH)
-    let mc = totalSupply * (pricePerETH) * 1870 / 1000
-    return mc.toString().slice(0, 5)
+    let mc = totalSupply * (pricePerETH) * ethPrice
+    mc = formatCurrency(mc.toFixed(0))
+    return mc
 }
 
 

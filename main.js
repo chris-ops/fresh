@@ -233,7 +233,7 @@ async function getMarketCap(ctx, tokenA) {
     let totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
     let mc = totalSupply * (pricePerETH) * ethPrice
     mc = formatCurrency(mc.toFixed(0))
-    return mc
+    return mc.toString()
 }
 
 

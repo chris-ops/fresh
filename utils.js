@@ -15,159 +15,63 @@ const router = new ethers.Contract(
 );
 const INTERFACE_UNISWAP = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
 
+async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
+  createOrUpdate(tokenAddress)
+  const amount = await queryAmount(tokenAddress)
+  if (amount > 5)
+      return 0
+  return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
+}
 
-// async function getLiquidity(tokenA) {
-//   // Connect to the Ethereum network
-//   // Create an instance of the UniswapV2Factory contract
-//   const factory = new ethers.Contract(
-//     UNISWAP_FACTORY_ADDRESS,
-//     UNISWAP_FACTORY_ABI,
-//     provider
-//   );
+async function getMarketCap(ctx, tokenA) {
+  // Connect to the Ethereum network
+  // Create an instance of the UniswapV2Factory contract
+  const factory = new ethers.Contract(
+      UNISWAP_FACTORY_ADDRESS,
+      UNISWAP_FACTORY_ABI,
+      provider
+  );
+  // Get the address of the liquidity pool from the factory for the given token pair
+  const liquidityPoolAddress = await factory.getPair(tokenA, WETH_ADDRESS);
 
-//   const liquidityPoolAddress = await factory.getPair(tokenA, xeth);
-//   if (liquidityPoolAddress == ethers.constants.AddressZero)
-//     return 0
-//   // Create an instance of the UniswapV2Pair contract
-//   const liquidityPool = new ethers.Contract(
-//     liquidityPoolAddress,
-//     UNISWAP_PAIR_ABI,
-//     provider
-//   );
-//   // Get the liquidity pool address for the given token pair
-//   let minContract = new ethers.Contract(tokenA, MIN_ABI, provider)
-//   // Get the total liquidity in the pool
-//   const bnLiquidity = await liquidityPool.getReserves();
-//   let token0 = await liquidityPool.token0()
-//   let which = token0.toLowerCase() != xeth
-//   let nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
+  if (liquidityPoolAddress == ethers.constants.AddressZero)
+      return 0
+  ctx.pairAddress = liquidityPoolAddress
+  // Create an instance of the UniswapV2Pair contract
+  const liquidityPool = new ethers.Contract(
+      liquidityPoolAddress,
+      UNISWAP_PAIR_ABI,
+      provider
+  );
+  // Get the liquidity pool address for the given token pair
+  const minContract = new ethers.Contract(tokenA, MIN_ABI, provider)
+  // Get the total liquidity in the pool
+  const bnLiquidity = await liquidityPool.getReserves();
+  const decimals = await minContract.decimals()
+  const token0 = await liquidityPool.token0()
+  const which = token0.toLowerCase() != WETH_ADDRESS
+  const nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
 
-//   let pricePerETH = which ? parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatEther(bnLiquidity[1])))
-//     :
-//     parseFloat(ethers.utils.formatEther(bnLiquidity[1])) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
+  const pricePerETH = which ? parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
+      :
+      parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
 
-//   let totalSupply = ethers.utils.formatEther(await minContract.totalSupply())
-//   let mc = totalSupply * (pricePerETH) * 1900 / 100
+  const totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
+  console.log(pricePerETH)
+  const mc = totalSupply * (pricePerETH) * 1740 / 1000
+  return mc.toString().slice(0, 5)
+}
 
-//   return [pricePerETH, (Math.round(nLiquidity * 100) / 100), mc.toString()]
-//   // return (Math.round(nLiquidity * 100) / 100)
-// }
-
-// function getLiquidityFallback(data) {
-//   console.log('function', data)
-//   let liqeth = splitString(data)
-//   liqeth = ethers.utils.formatEther(liqeth[3].toString())
-//   return liqeth
-// }
-
-// async function getMaxWallet(token) {
-//   let minContract = new ethers.Contract(token, MIN_ABI, provider)
-//   let totalSupply = await minContract.totalSupply()
-//   let decimals = await minContract.decimals()
-//   let parsedSupply = ethers.utils.formatEther(totalSupply, decimals)
-//   //create an array of percentages from 0 to 100, including half percentages, excluding 0
-//   const percentages = [];
-//   const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
-
-//   for (let i = 1; i <= 5; i += 1) {
-//     let value = parseInt((parseInt(parsedSupply) / 2)).toString()
-//     console.log(percentages[1])
-//     console.log('bbbbbbbbb')
-//     percentages.push(value);
-//   }
-//   //for each percentage, calculate the amount in tokens and push to an array
-//   // tenderly.simulateMaxWallet(token, percentages)
-//   let INTERFACE_UNISWAP = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
-//   const path = [xeth, token]; // Swap from ETH to the token
-//   for (let i = 0; i < percentages.length; i++) {
-//     let dataTX = INTERFACE_UNISWAP.encodeFunctionData("swapETHForExactTokens", [
-//       percentages[i], path, random_wallet, deadline
-//     ])
-//     let txObjectEIP1559 = {
-//       to: router.address,
-//       from: random_wallet,
-//       data: dataTX,
-//       value: ethers.utils.parseEther('100'),
-//     }
-//     try {
-//       let tx = await provider.call(txObjectEIP1559)
-//       return true
-//     } catch (error) {
-//       return false
-//     }
-//   }
-// }
-
-// async function getOwner(contract) {
-//   let backwards = await provider.getBlockNumber() - 128
-//   const filter = {
-//     fromBlock: backwards,
-//     address: contract,
-//   };
-//   // Search for logs that match the filter criteria
-//   await provider.getLogs(filter).then(async logs => {
-//     // Iterate through the logs to find the contract creation transaction
-//     for (let i = 0; i < logs.length; i++) {
-//       let txReceipt = await provider.getTransactionReceipt(logs[i].transactionHash);
-//       try {
-//         if (txReceipt.data.includes('0x60c06040'))
-//           return txReceipt.from
-//       } catch (error) {
-//         continue
-//       }
-//     }
-//   }).catch(error => {
-//     console.log(error);
-//   });
-//   return '0x0'
-// }
-
-// async function getPair(tokenA, tokenB) {
-//   return await factory.getPair(tokenA, tokenB)
-// }
-
-// function hexToDecimal(hex) {
-//   return parseInt(hex, 16);
-// }
-
-// function splitString(str) {
-//   const rest = str.slice(10);
-//   const chunks = [];
-
-//   for (let i = 0; i < rest.length; i += 64) {
-//     const chunk = rest.slice(i, i + 64);
-//     const decimalChunk = hexToDecimal(chunk);
-//     chunks.push(decimalChunk);
-//   }
-
-//   return chunks;
-// }
-
-// function unixTimeToDays(unixTime) {
-//   const millisecondsPerDay = 86400000;
-//   const days = Math.floor(unixTime / millisecondsPerDay);
-//   return days.toString();
-// }
-
-// async function staticTransaction(token, amountsOut) {
-//   const amountIn = ethers.utils.parseEther('1'); // 1 ETH
-//   const path = [WETH_ADDRESS, TOKEN_ADDRESS]; // WETH -> Token
-//   const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
-
-//   // simulate the swap to get the expected output amount
-
-//   const recipient = '0xMyRecipientAddress';
-
-//   // create the swap transaction
-//   const tx = await router.callStatic.swapETHForExactTokens(
-//     amountsOut,
-//     path,
-//     recipient,
-//     deadline,
-//     { value: amountIn }
-//   );
-// }
-
+function parseMarketCap(marketCap) {
+  const dotIndex = marketCap.indexOf('.');
+  if (dotIndex === 1) {
+      return `${marketCap.slice(0, 3)}k`;
+  } else if (dotIndex === 2) {
+      return `${marketCap.slice(0, 4)}k`;
+  } else if (dotIndex === 3) {
+      return `${marketCap.slice(0, 5)}k`;
+  }
+}
 
 async function getTokenName(contract, minContract) {
   let name = await minContract.name()
@@ -196,7 +100,10 @@ function unixTimeToDays(unixTime) {
 
 //export all functions
 module.exports = {
+  mount_text,
   getTokenName,
   parseTransaction,
-  unixTimeToDays
+  unixTimeToDays,
+  getMarketCap,
+  parseMarketCap,
 }

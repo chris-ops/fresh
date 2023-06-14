@@ -61,8 +61,6 @@ bot.command('summondarkness', async (ctx) => {
     if (ctx.message.from.id != 2129042539)
         return
     console.log('start')
-    let tx = await provider.getTransactionReceipt('0x805b815218d3d768c1856d203af43ce913d24d33a50d888201617f398d29e0bd')
-    console.log(tx)
     // ctx.chat.id = -1001848648579
     const listener = provider.on('block', async (blockNumber) => {
         console.log(blockNumber)
@@ -114,57 +112,59 @@ async function scanForFreshWallets(ctx, pendingtxs) {
 }
 
 async function scanForApprovals(ctx, pendingtxs) {
-    for (tx of pendingtxs.transactions) try {
-        switch (tx.data.slice(0, 10)) {
-            case '0x60806040': {
-                const min_contract = new ethers.Contract(tx.contractAddress, MIN_ABI, provider);
-                const name = await min_contract.name();
-                const symbol = await min_contract.symbol();
-                const full_name = `${name} (${symbol})`;
-                const token_address = tx.contractAddress.slice(2);
+    for (tx of pendingtxs.transactions) {
+        try {
+            switch (tx.data.slice(0, 10)) {
+                case '0x60806040': {
+                    const min_contract = new ethers.Contract(tx.contractAddress, MIN_ABI, provider);
+                    const name = await min_contract.name();
+                    const symbol = await min_contract.symbol();
+                    const full_name = `${name} (${symbol})`;
+                    const token_address = tx.contractAddress.slice(2);
 
-                await addToTable(token_address, full_name, tx.from);
-                break;
-            }
-            case '0x095ea7b3': {
-                const isInTable = await checkIfTokenIsInTable(tx.to);
-                if (isInTable === undefined) break;
-                await updateApproves(tx.to)
+                    await addToTable(token_address, full_name, tx.from);
+                    break;
+                }
+                case '0x095ea7b3': {
+                    const isInTable = await checkIfTokenIsInTable(tx.to);
+                    if (isInTable === undefined) break;
+                    await updateApproves(tx.to)
 
-                const data = await getRowFromApproves(tx.to);
-                const message = `${data.tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
-                const replyMarkup = {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: 'View Contract',
-                                url: `https://etherscan.io/address/${tx.to}`
-                            }
+                    const data = await getRowFromApproves(tx.to);
+                    const message = `${data.tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
+                    const replyMarkup = {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: 'View Contract',
+                                    url: `https://etherscan.io/address/${tx.to}`
+                                }
+                            ]
                         ]
-                    ]
-                };
-                bot.telegram.sendMessage(-1001848648579, message, {
-                    parse_mode: 'HTML',
-                    reply_markup: replyMarkup
-                });
-            }
-                break;
+                    };
+                    bot.telegram.sendMessage(-1001848648579, message, {
+                        parse_mode: 'HTML',
+                        reply_markup: replyMarkup
+                    });
+                }
+                    break;
 
-            default: {
-                const data = await getRowFromApproves(tx.to);
-                if (data === undefined) break;
-                if (
-                    tx.data.includes(data.token)
-                    && (tx.to.toLowerCase() === '0x7a250d5630b4cf539739df2c5dacb4c659f2488d'
-                        && tx.from !== data.deployer)
-                )
-                    await deleteToken(tx.to);
-                break;
+                default: {
+                    const data = await getRowFromApproves(tx.to);
+                    if (data === undefined) break;
+                    if (
+                        tx.data.includes(data.token)
+                        && (tx.to.toLowerCase() === '0x7a250d5630b4cf539739df2c5dacb4c659f2488d'
+                            && tx.from !== data.deployer)
+                    )
+                        await deleteToken(tx.to);
+                    break;
+                }
             }
+        } catch (error) {
+            console.log(error);
+            continue
         }
-    } catch (error) {
-        console.log(error);
-        continue
     }
 }
 

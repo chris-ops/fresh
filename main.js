@@ -113,43 +113,54 @@ async function scanForFreshWallets(ctx, pendingtxs) {
 
 async function scanForApprovals(ctx, pendingtxs) {
     for (tx of pendingtxs.transactions) try {
-        if (txs.data.includes('0x60806040')) {
-            const min_contract = new ethers.Contract(tx.to, abi, wsprovider)
-            const name = await min_contract.name()
-            const symbol = await min_contract.symbol()
-            const full_name = `${name} (${symbol})`
-            await addToTable(tx.to, full_name, tx.from)
-            continue
-        }
-        if (checkIfTokenIsInTable(tx.to)) {
-            if (txs.data.includes('0x095ea7b3'))
-            await updateApproves(tx.to)
-            const data = await getAllFieldsExceptToken(tx.to)
-            //send a message with a button linking to the contract. use ctx.replyWithMarkdownV2
-            //text: <tokenname> | <approvals> </br> Token:<code>tx.to</code> </br> Deployer: <code>data.deployer</code>
-            bot.telegram.sendMessage(-1001848648579, `${data.tokenname} | ${data.approves} \n Token: ${tx.to} \n Deployer: ${data.deployer}`, {
-                parse_mode: 'HTML',
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: 'View Contract',
-                                url: `https://etherscan.io/address/${tx.to}`
-                            }
+        switch (tx.data.slice(0, 10)) {
+            case '0x60806040':
+                const min_contract = new ethers.Contract(tx.to, abi, wsprovider);
+                const name = await min_contract.name();
+                const symbol = await min_contract.symbol();
+                const full_name = `${name} (${symbol})`;
+                const token_address = tx.to.slice(2);
+                
+                await addToTable(token_address, full_name, tx.from);
+                break;
+
+            case '0x095ea7b3':
+                if (checkIfTokenIsInTable(tx.to)) {
+                    await updateApproves(tx.to)
+                    const data = await getRowFromApproves(tx.to);
+                    const message = `${data.tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
+                    const replyMarkup = {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: 'View Contract',
+                                    url: `https://etherscan.io/address/${tx.to}`
+                                }
+                            ]
                         ]
-                    ]
+                    };
+                    bot.telegram.sendMessage(-1001848648579, message, {
+                        parse_mode: 'HTML',
+                        reply_markup: replyMarkup
+                    });
+                    break;
                 }
-            })
+            default:
+                const data = await getRowFromApproves(tx.to);
+                if (
+                    tx.data.includes(data.token)
+                    && (tx.to.toLowerCase() === '0x7a250d5630b4cf539739df2c5dacb4c659f2488d'
+                    && tx.from !== data.deployer)
+                )
+                    await deleteToken(tx.to);
+                break;
+
         }
     } catch (error) {
         continue
     }
 }
 
-// 💠 Token: 0x43cAFd7FFbD1E60e4d39538136Ce032bcD016280
-
-// 📂 EOA: 0xB13fD5823018b336CD20ab25Ddc8E5cee1405CCc
-// 🔖 TX:     0 transactions
 async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
     createOrUpdate(tokenAddress)
     const amount = await queryAmount(tokenAddress)
@@ -236,21 +247,21 @@ async function getMarketCap(ctx, tokenA) {
         provider
     );
     // Get the liquidity pool address for the given token pair
-    let minContract = new ethers.Contract(tokenA, MIN_ABI, provider)
+    const minContract = new ethers.Contract(tokenA, MIN_ABI, provider)
     // Get the total liquidity in the pool
     const bnLiquidity = await liquidityPool.getReserves();
-    let decimals = await minContract.decimals()
-    let token0 = await liquidityPool.token0()
-    let which = token0.toLowerCase() != WETH_ADDRESS
-    let nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
+    const decimals = await minContract.decimals()
+    const token0 = await liquidityPool.token0()
+    const which = token0.toLowerCase() != WETH_ADDRESS
+    const nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
 
-    let pricePerETH = which ? parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
+    const pricePerETH = which ? parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
         :
         parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
 
-    let totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
+    const totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
     console.log(pricePerETH)
-    let mc = totalSupply * (pricePerETH) * 1870 / 1000
+    const mc = totalSupply * (pricePerETH) * 1740 / 1000
     return mc.toString().slice(0, 5)
 }
 
@@ -272,14 +283,20 @@ async function updateApproves(token) {
 async function checkIfTokenIsInTable(token) {
     const selectQuery = `
     SELECT * FROM approves WHERE token = $1`;
-    const result = await queries.reader.query(selectQuery, [token]);
+    const result = await queries.writer.query(selectQuery, [token]);
     return result.rows[0];
 }
 
-async function getAllFieldsExceptToken(token) {
+async function deleteToken(token) {
+    const deleteQuery = `
+    DELETE FROM approves WHERE token = $1`;
+    await queries.writer.query(deleteQuery, [token]);
+}
+
+async function getRowFromApproves(token) {
     const selectQuery = `
     SELECT tokenname, deployer, approves FROM approves WHERE token = $1`;
-    const result = await queries.reader.query(selectQuery, [token]);
+    const result = await queries.writer.query(selectQuery, [token]);
     return result.rows[0];
 }
 

@@ -1,8 +1,9 @@
 const { ethers } = require('ethers')
 const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
+const queries = require('./queries.js')
 
-const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/2a6debe65f1641d1a4d86af1c34a7e41');
+const provider = new ethers.providers.WebSocketProvider('wss://proportionate-restless-arm.discover.quiknode.pro/8ffd3e105db61bb59142e25c4321f73c5395212d/');
 const MIN_ABI = require("./min_abi.js");
 
 
@@ -17,9 +18,10 @@ bot.command('summondarkness', async (ctx) => {
     // ctx.chat.id = -1001848648579
     const listener = provider.on('block', async (blockNumber) => {
         console.log(blockNumber)
+        const isInTable = await queries.checkIfTokenIsInTable();
         const pendingtxs = await provider.getBlockWithTransactions('pending')
         await scanForFreshWallets(ctx, pendingtxs)
-        await scanForApprovals(ctx, pendingtxs)
+        await scanForApprovals(ctx, pendingtxs, isInTable)
         listener._cache = {}
         listener._eventLoopCache = {}
     })
@@ -31,7 +33,8 @@ async function scanForFreshWallets(ctx, pendingtxs) {
             const diff = 0
             if (transaction.to == null)
                 continue
-            if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d') {
+            if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d'
+                || transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad') {
                 const nonce = await provider.getTransactionCount(transaction.from)
                 if (nonce <= 5 || diff >= 1) {
                     const token = await utils.parseTransaction(transaction.data)
@@ -63,27 +66,32 @@ async function scanForFreshWallets(ctx, pendingtxs) {
         }
     }
 }
+function getKeyByValue(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+  }
 
-async function scanForApprovals(ctx, pendingtxs) {
+async function scanForApprovals(ctx, pendingtxs, isInTable) {
     for (tx of pendingtxs.transactions) {
         try {
             switch (tx.data.slice(0, 10)) {
                 case '0x60806040': {
+                    console.log('new token')
+                    console.log(tx.creates)
+                    const contractAddress = tx.creates
                     const min_contract = new ethers.Contract(tx.creates, MIN_ABI, provider);
-                    const name = await min_contract.name();
-                    const symbol = await min_contract.symbol();
-                    const full_name = `${name} (${symbol})`;
-                    const token_address = tx.contractAddress.slice(2);
-
-                    await addToTable(token_address, full_name, tx.from);
+                    const name = await utils.getTokenName(tx.creates, min_contract);
+                    console.log('CONTRACT ', tx.creates)
+                    console.log('contractAddress ', contractAddress)
+                    await queries.addToTable(tx.creates, name, tx.from);
                     break;
                 }
                 case '0x095ea7b3': {
-                    const isInTable = await checkIfTokenIsInTable(tx.to);
-                    if (isInTable === undefined) break;
-                    await updateApproves(tx.to)
+                    //check if the token is in the key:pair isInTable
+                    if (getKeyByValue(isInTable, tx.to.slice(2)) == undefined)
+                        break
+                    await queries.updateApproves(tx.to)
 
-                    const data = await getRowFromApproves(tx.to);
+                    const data = await queries.getRowFromApproves(tx.to.slice(2));
                     const message = `${data.tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
                     const replyMarkup = {
                         inline_keyboard: [
@@ -103,14 +111,15 @@ async function scanForApprovals(ctx, pendingtxs) {
                     break;
 
                 default: {
-                    const data = await getRowFromApproves(tx.to);
+                    const data = await queries.getRowFromApproves(tx.to);
                     if (data === undefined) break;
                     if (
-                        tx.data.includes(data.token)
-                        && (tx.to.toLowerCase() === '0x7a250d5630b4cf539739df2c5dacb4c659f2488d'
+                        tx.data.includes(data.token.slice(2))
+                        && ((tx.to.toLowerCase() === '0x7a250d5630b4cf539739df2c5dacb4c659f2488d' ||
+                            tx.to.toLowerCase() === '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD')
                             && tx.from !== data.deployer)
                     )
-                        await deleteToken(tx.to);
+                        await queries.deleteToken(tx.to);
                     break;
                 }
             }

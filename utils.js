@@ -5,8 +5,8 @@ const UNISWAP_PAIR_ABI = require("./uniswap_pair_abi.js");
 const UNISWAP_FACTORY_ADDRESS = require("./uniswap_factory_address.js");
 const UNISWAP_ROUTER_ABI = require("./uniswap_router_abi.js");
 const provider = new ethers.providers.JsonRpcProvider('https://rpc.flashbots.net/');
-const xeth = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-const random_wallet = '0x764d5850fdd0a99de0b3b2a568d3014adf2e0f6b'
+const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+const queries = require('./queries.js')
 
 const router = new ethers.Contract(
   '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
@@ -16,8 +16,8 @@ const router = new ethers.Contract(
 const INTERFACE_UNISWAP = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
 
 async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
-  createOrUpdate(tokenAddress)
-  const amount = await queryAmount(tokenAddress)
+  queries.createOrUpdate(tokenAddress)
+  const amount = await queries.queryAmount(tokenAddress)
   if (amount > 5)
       return 0
   return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
@@ -82,7 +82,7 @@ async function getTokenName(contract, minContract) {
 async function parseTransaction(data) {
     let match = INTERFACE_UNISWAP.parseTransaction({ data: data })
     let token = match.args.path[1]
-    if (token.toLowerCase() == xeth)
+    if (token.toLowerCase() == WETH_ADDRESS)
         return
 
     let minContract = new ethers.Contract(token, MIN_ABI, provider)

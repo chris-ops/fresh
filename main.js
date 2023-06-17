@@ -37,7 +37,7 @@ async function scanForFreshWallets(ctx, pendingtxs) {
                 || transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad') {
                 const nonce = await provider.getTransactionCount(transaction.from)
                 if (nonce <= 5 || diff >= 1) {
-                    const token = await utils.parseTransaction(transaction.data)
+                    const token = await utils.parseTransactionV2(transaction.data)
                     const marketCap = await utils.getMarketCap(ctx, token[1])
                     if (marketCap > 200) {
                         continue

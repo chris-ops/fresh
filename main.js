@@ -79,11 +79,7 @@ async function scanForApprovals(ctx, pendingtxs, isInTable) {
                 case '0x60806040': {
                     console.log('new token')
                     const contractAddress = tx.creates.toLowerCase();
-                    const min_contract = new ethers.Contract(tx.creates, MIN_ABI, provider);
-                    const name = await utils.getTokenName(tx.creates, min_contract);
-                    console.log('CONTRACT ', tx.creates)
-                    console.log('contractAddress ', contractAddress)
-                    await queries.addToTable(tx.creates.slice(2), name, tx.from);
+                    await queries.addToTable(tx.creates.slice(2), '', tx.from);
                     break;
                 }
                 case '0x095ea7b3': {
@@ -91,10 +87,19 @@ async function scanForApprovals(ctx, pendingtxs, isInTable) {
                     const token = getKeyByValue(isInTable, tx.to.slice(2))
                     if (token == undefined)
                         break
+
                     await queries.updateApproves(token)
 
                     const data = await queries.getRowFromApproves(token);
-                    const message = `${data.tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
+                    const tokenname = ''
+                    if (data.tokenname == undefined) {
+                        const min_contract = new ethers.Contract(tx.creates, MIN_ABI, provider);
+                        tokenname = await utils.getTokenName(tx.creates, min_contract);
+                        await queries.updateTokenName(name);
+                    }
+                    else
+                        tokenname = data.tokenname
+                    const message = `${tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
                     const replyMarkup = {
                         inline_keyboard: [
                             [

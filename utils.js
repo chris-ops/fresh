@@ -72,8 +72,8 @@ function parseMarketCap(marketCap) {
 }
 
 async function getTokenName(contract, minContract) {
-  let name = await minContract.name()
-  let symbol = await minContract.symbol()
+  const name = await minContract.name()
+  const symbol = await minContractsymbol()
   return `${name} (${symbol})`
 }
 

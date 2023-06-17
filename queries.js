@@ -74,6 +74,11 @@ async function addToTable(token, tokenname, deployer) {
     await writer.query(insertQuery, [token, tokenname, deployer, 0]);
 }
 
+async function updateTokenName(tokenname) {
+    const updateQuery = `
+    UPDATE approves SET tokenname = tokenname WHERE token = $1`;
+    await writer.query(updateQuery, [tokenname]);
+}
 async function updateApproves(token) {
     const updateQuery = `
     UPDATE approves SET approves = approves + 1 WHERE token = $1`;
@@ -107,5 +112,6 @@ module.exports = {
     updateApproves,
     checkIfTokenIsInTable,
     deleteToken,
-    getRowFromApproves
+    getRowFromApproves,
+    updateTokenName
 };

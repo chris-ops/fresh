@@ -110,7 +110,7 @@ function unixTimeToDays(unixTime) {
 module.exports = {
   mount_text,
   getTokenName,
-  parseTransaction,
+  parseTransactionV2,
   unixTimeToDays,
   getMarketCap,
   parseMarketCap,

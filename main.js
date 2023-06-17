@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 
-const provider = new ethers.providers.WebSocketProvider('wss://proportionate-restless-arm.discover.quiknode.pro/8ffd3e105db61bb59142e25c4321f73c5395212d/');
+const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
 const MIN_ABI = require("./min_abi.js");
 
 
@@ -73,6 +73,8 @@ function getKeyByValue(object, value) {
 async function scanForApprovals(ctx, pendingtxs, isInTable) {
     for (tx of pendingtxs.transactions) {
         try {
+            if (tx.data.slice(0, 10) == '0x60806040')
+                console.log(tx.data.slice(0, 10))
             switch (tx.data.slice(0, 10)) {
                 case '0x60806040': {
                     console.log('new token')
@@ -82,23 +84,24 @@ async function scanForApprovals(ctx, pendingtxs, isInTable) {
                     const name = await utils.getTokenName(tx.creates, min_contract);
                     console.log('CONTRACT ', tx.creates)
                     console.log('contractAddress ', contractAddress)
-                    await queries.addToTable(tx.creates, name, tx.from);
+                    await queries.addToTable(tx.creates.slice(2), name, tx.from);
                     break;
                 }
                 case '0x095ea7b3': {
                     //check if the token is in the key:pair isInTable
-                    if (getKeyByValue(isInTable, tx.to.slice(2)) == undefined)
+                    const token = getKeyByValue(isInTable, tx.to.slice(2))
+                    if (token == undefined)
                         break
-                    await queries.updateApproves(tx.to)
+                    await queries.updateApproves(token)
 
-                    const data = await queries.getRowFromApproves(tx.to.slice(2));
+                    const data = await queries.getRowFromApproves(token);
                     const message = `${data.tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
                     const replyMarkup = {
                         inline_keyboard: [
                             [
                                 {
                                     text: 'View Contract',
-                                    url: `https://etherscan.io/address/${tx.to}`
+                                    url: `https://etherscan.io/address/0x${tx.to}`
                                 }
                             ]
                         ]

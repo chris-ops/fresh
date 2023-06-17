@@ -84,7 +84,7 @@ async function checkIfTokenIsInTable() {
     const selectQuery = `
     SELECT token FROM approves`;
     const result = await writer.query(selectQuery);
-    return result.rows[0];
+    return result.rows;
 }
 
 async function deleteToken(token) {

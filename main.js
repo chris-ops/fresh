@@ -78,8 +78,7 @@ async function scanForApprovals(ctx, pendingtxs, isInTable) {
             switch (tx.data.slice(0, 10)) {
                 case '0x60806040': {
                     console.log('new token')
-                    console.log(tx.creates)
-                    const contractAddress = tx.creates
+                    const contractAddress = tx.creates.toLowerCase();
                     const min_contract = new ethers.Contract(tx.creates, MIN_ABI, provider);
                     const name = await utils.getTokenName(tx.creates, min_contract);
                     console.log('CONTRACT ', tx.creates)

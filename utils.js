@@ -1,19 +1,17 @@
 const { ethers } = require("ethers");
 const MIN_ABI = require("./min_abi.js");
-const UNISWAP_FACTORY_ABI = require("./uniswap_factory_abi.js");
-const UNISWAP_PAIR_ABI = require("./uniswap_pair_abi.js");
-const UNISWAP_FACTORY_ADDRESS = require("./uniswap_factory_address.js");
-const UNISWAP_ROUTER_ABI = require("./uniswap_router_abi.js");
 const provider = new ethers.providers.JsonRpcProvider('https://rpc.flashbots.net/');
 const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const queries = require('./queries.js')
 
-const router = new ethers.Contract(
-  '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
-  UNISWAP_ROUTER_ABI,
-  provider
-);
-const INTERFACE_UNISWAP = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
+const UNISWAP_FACTORY_ABI = require("./uniswap_factory_abi.js");
+const UNISWAP_PAIR_ABI = require("./uniswap_pair_abi.js");
+const UNISWAP_FACTORY_ADDRESS = require("./uniswap_factory_address.js");
+const UNISWAP_ROUTER_ABI = require("./uniswap_router_abi.js");
+const UNISWAP_V3 = require("./uniswap_v3.js");
+
+const INTERFACE_UNISWAP_V2 = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
+const INTERFACE_UNISWAP_V3 = new ethers.utils.Interface(UNISWAP_V3)
 
 async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
   queries.createOrUpdate(tokenAddress)
@@ -79,8 +77,8 @@ async function getTokenName(contract, minContract) {
   return `${name} (${symbol})`
 }
 
-async function parseTransaction(data) {
-    let match = INTERFACE_UNISWAP.parseTransaction({ data: data })
+async function parseTransactionV2(data) {
+    let match = INTERFACE_UNISWAP_V2.parseTransaction({ data: data })
     let token = match.args.path[1]
     if (token.toLowerCase() == WETH_ADDRESS)
         return
@@ -88,6 +86,16 @@ async function parseTransaction(data) {
     let minContract = new ethers.Contract(token, MIN_ABI, provider)
     let tokenName = await getTokenName(token, minContract)
     return [tokenName, token]
+}
+async function parseTransactionV3(data) {
+  let match = INTERFACE_UNISWAP_V3.parseTransaction({ data: data })
+  let token = match.args.path[1]
+  if (token.toLowerCase() == WETH_ADDRESS)
+      return
+
+  let minContract = new ethers.Contract(token, MIN_ABI, provider)
+  let tokenName = await getTokenName(token, minContract)
+  return [tokenName, token]
 }
 
 function unixTimeToDays(unixTime) {

@@ -95,7 +95,7 @@ async function scanForApprovals(ctx, pendingtxs, isInTable) {
                     if (data.tokenname == undefined) {
                         const min_contract = new ethers.Contract(tx.creates, MIN_ABI, provider);
                         tokenname = await utils.getTokenName(tx.creates, min_contract);
-                        await queries.updateTokenName(name);
+                        await queries.updateTokenName(tokenname);
                     }
                     else
                         tokenname = data.tokenname

@@ -2,8 +2,9 @@ const { ethers } = require('ethers')
 const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
+const axios = require('axios')
 
-const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
+const provider = new ethers.providers.WebSocketProvider('wss://proportionate-restless-arm.discover.quiknode.pro/8ffd3e105db61bb59142e25c4321f73c5395212d/');
 const MIN_ABI = require("./min_abi.js");
 
 
@@ -21,7 +22,7 @@ bot.command('summondarkness', async (ctx) => {
         const isInTable = await queries.checkIfTokenIsInTable();
         const pendingtxs = await provider.getBlockWithTransactions('pending')
         await scanForFreshWallets(ctx, pendingtxs)
-        await scanForApprovals(ctx, pendingtxs, isInTable)
+        // await scanForApprovals(ctx, pendingtxs, isInTable)
         listener._cache = {}
         listener._eventLoopCache = {}
     })
@@ -68,7 +69,7 @@ async function scanForFreshWallets(ctx, pendingtxs) {
 }
 function getKeyByValue(object, value) {
     return Object.keys(object).find(key => object[key] === value);
-  }
+}
 
 async function scanForApprovals(ctx, pendingtxs, isInTable) {
     for (tx of pendingtxs.transactions) {
@@ -78,57 +79,65 @@ async function scanForApprovals(ctx, pendingtxs, isInTable) {
             switch (tx.data.slice(0, 10)) {
                 case '0x60806040': {
                     console.log('new token')
-                    const contractAddress = tx.creates.toLowerCase();
-                    await queries.addToTable(tx.creates.slice(2), '', tx.from);
+                    await queries.addToTable(tx.creates, '', tx.from);
                     break;
                 }
                 case '0x095ea7b3': {
-                    //check if the token is in the key:pair isInTable
-                    const token = getKeyByValue(isInTable, tx.to.slice(2))
-                    if (token == undefined)
-                        break
+                    isInTable = await queries.getRowFromApproves(tx.to);
+                    if (isInTable === undefined) break;
+                    const token = tx.to
+                    const min_contract = new ethers.Contract(token, MIN_ABI, provider);
+                    const tokenName = await utils.getTokenName(min_contract);
+                    const request = `https://api.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=${token}&apikey=ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP`
+                    const response = await axios.get(request)
+                    const deployer = response.data.result[0].contractCreator.toLowerCase()
+                    console.log('approve2')
 
-                    await queries.updateApproves(token)
+                    await queries.insertOrUpdateApproves(token, tokenName, deployer)
+                    // check if the token is in the key:pair isInTable
 
-                    const data = await queries.getRowFromApproves(token);
-                    const tokenname = ''
-                    if (data.tokenname == undefined) {
-                        const min_contract = new ethers.Contract(tx.creates, MIN_ABI, provider);
-                        tokenname = await utils.getTokenName(tx.creates, min_contract);
-                        await queries.updateTokenName(tokenname);
-                    }
-                    else
-                        tokenname = data.tokenname
-                    const message = `${tokenname} | ${data.approves}\nToken: ${tx.to}\nDeployer: ${data.deployer}`;
+                    const data = await queries.getRowFromApproves(token)
+                    const message = `${data.tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
                     const replyMarkup = {
                         inline_keyboard: [
                             [
                                 {
                                     text: 'View Contract',
-                                    url: `https://etherscan.io/address/0x${tx.to}`
+                                    url: `https://etherscan.io/address/${tx.to}`
                                 }
                             ]
                         ]
                     };
-                    bot.telegram.sendMessage(-1001848648579, message, {
+                    bot.telegram.sendMessage(-1001848648579, {
+                        text: message,
                         parse_mode: 'HTML',
                         reply_markup: replyMarkup
                     });
                 }
-                    break;
+                    console.log('sendmessage')
 
-                default: {
+                    break
+
+                default:
                     const data = await queries.getRowFromApproves(tx.to);
+
                     if (data === undefined) break;
+
                     if (
-                        tx.data.includes(data.token.slice(2))
-                        && ((tx.to.toLowerCase() === '0x7a250d5630b4cf539739df2c5dacb4c659f2488d' ||
-                            tx.to.toLowerCase() === '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD')
-                            && tx.from !== data.deployer)
+                        (
+                            [
+                                '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+                                '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
+                                '0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B'
+                            ]
+                                .includes(tx.to)
+                        )
+                        && tx.from != data.deployer
                     )
                         await queries.deleteToken(tx.to);
-                    break;
-                }
+
+                    break
+
             }
         } catch (error) {
             console.log(error);

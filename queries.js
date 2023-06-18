@@ -17,16 +17,17 @@ async function createTable() {
     await writer.query(createTableQuery);
 
     const createTableQuery2 = `
-    CREATE TABLE IF NOT EXISTS approves (
+    CREATE TABLE IF NOT EXISTS approvalsToken (
         token TEXT PRIMARY KEY,
         tokenname TEXT,
         deployer TEXT,
-        approves INT
+        approves INTEGER
     );
   `;
     await writer.query(createTableQuery2);
 
 }
+
 createTable()
 
 async function createOrUpdate(tokenName) {
@@ -68,7 +69,7 @@ async function queryAmount(tokenName) {
 
 async function addToTable(token, tokenname, deployer) {
     const insertQuery = `
-    INSERT INTO approves (token, tokenname, deployer, approves)
+    INSERT INTO approvalsToken (token, tokenname, deployer, approves)
     VALUES ($1, $2, $3, $4)
     `;
     await writer.query(insertQuery, [token, tokenname, deployer, 0]);
@@ -76,31 +77,35 @@ async function addToTable(token, tokenname, deployer) {
 
 async function updateTokenName(tokenname) {
     const updateQuery = `
-    UPDATE approves SET tokenname = tokenname WHERE token = $1`;
+    UPDATE approvalsToken SET tokenname = tokenname WHERE token = $1`;
     await writer.query(updateQuery, [tokenname]);
 }
-async function updateApproves(token) {
-    const updateQuery = `
-    UPDATE approves SET approves = approves + 1 WHERE token = $1`;
-    await writer.query(updateQuery, [token]);
+async function insertOrUpdateApproves(token, tokenName, deployer) {
+    const insertQuery = `
+    INSERT INTO approvalsToken (token, tokenname, deployer, approves)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (token)
+    DO UPDATE SET approves = approvalsToken.approves + 1`;
+    await writer.query(insertQuery, [token, tokenName, deployer, 1]);
 }
 
 async function checkIfTokenIsInTable() {
     const selectQuery = `
-    SELECT token FROM approves`;
+    SELECT token FROM approvalsToken`;
     const result = await writer.query(selectQuery);
     return result.rows;
 }
 
 async function deleteToken(token) {
+    console.log('deleting token');
     const deleteQuery = `
-    DELETE FROM approves WHERE token = $1`;
+    DELETE FROM approvalsToken WHERE token = $1`;
     await writer.query(deleteQuery, [token]);
 }
 
 async function getRowFromApproves(token) {
     const selectQuery = `
-    SELECT tokenname, deployer, approves FROM approves WHERE token = $1`;
+    SELECT tokenname, deployer, approves FROM approvalsToken WHERE token = $1`;
     const result = await writer.query(selectQuery, [token]);
     return result.rows[0];
 }
@@ -109,7 +114,7 @@ module.exports = {
     createOrUpdate,
     queryAmount,
     addToTable,
-    updateApproves,
+    insertOrUpdateApproves,
     checkIfTokenIsInTable,
     deleteToken,
     getRowFromApproves,

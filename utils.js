@@ -71,9 +71,9 @@ function parseMarketCap(marketCap) {
   }
 }
 
-async function getTokenName(contract, minContract) {
+async function getTokenName(minContract) {
   const name = await minContract.name()
-  const symbol = await minContractsymbol()
+  const symbol = await minContract.symbol()
   return `${name} (${symbol})`
 }
 
@@ -84,7 +84,7 @@ async function parseTransactionV2(data) {
         return
 
     let minContract = new ethers.Contract(token, MIN_ABI, provider)
-    let tokenName = await getTokenName(token, minContract)
+    let tokenName = await getTokenName(minContract)
     return [tokenName, token]
 }
 async function parseTransactionV3(data) {
@@ -94,7 +94,7 @@ async function parseTransactionV3(data) {
       return
 
   let minContract = new ethers.Contract(token, MIN_ABI, provider)
-  let tokenName = await getTokenName(token, minContract)
+  let tokenName = await getTokenName(minContract)
   return [tokenName, token]
 }
 

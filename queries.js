@@ -105,7 +105,7 @@ async function deleteToken(token) {
 
 async function getRowFromApproves(token) {
     const selectQuery = `
-    SELECT tokenname, deployer, approves FROM approvalsToken WHERE token = $1`;
+    SELECT tokenname, deployer, approves, creationdate FROM approvalsToken WHERE token = $1`;
     const result = await writer.query(selectQuery, [token]);
     return result.rows[0];
 }

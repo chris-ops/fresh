@@ -55,7 +55,6 @@ async function getMarketCap(ctx, tokenA) {
       parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
 
   const totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
-  console.log(pricePerETH)
   const mc = totalSupply * (pricePerETH) * 1740 / 1000
   return mc.toString().slice(0, 5)
 }

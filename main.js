@@ -4,7 +4,7 @@ const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 const axios = require('axios')
 
-const provider = new ethers.providers.WebSocketProvider('wss://proportionate-restless-arm.discover.quiknode.pro/8ffd3e105db61bb59142e25c4321f73c5395212d/');
+const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
 const MIN_ABI = require("./min_abi.js");
 
 

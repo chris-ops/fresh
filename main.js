@@ -21,7 +21,7 @@ bot.command('summondarkness', async (ctx) => {
         const transaction = await provider.getTransaction(hash)
         console.log(transaction)
         await scanForFreshWallets(ctx, transaction)
-        await scanForApprovals(ctx, transaction)
+        // await scanForApprovals(ctx, transaction)
     })
 }
 )

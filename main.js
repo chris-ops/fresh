@@ -20,7 +20,7 @@ bot.command('summondarkness', async (ctx) => {
     provider.on('pending', async (hash) => {
         const transaction = await provider.getTransaction(hash)
         await scanForFreshWallets(ctx, transaction)
-        // await scanForApprovals(ctx, transaction)
+        await scanForApprovals(ctx, transaction)
     })
 }
 )
@@ -68,7 +68,6 @@ function getKeyByValue(object, value) {
 async function scanForApprovals(ctx, tx) {
     try {
         if (tx.data.slice(0, 10) == '0x60806040')
-            console.log(tx.data.slice(0, 10))
         switch (tx.data.slice(0, 10)) {
             case '0x60806040': {
                 console.log('new token')
@@ -84,7 +83,6 @@ async function scanForApprovals(ctx, tx) {
                 const request = `https://api.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=${token}&apikey=ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP`
                 const response = await axios.get(request)
                 const deployer = response.data.result[0].contractCreator.toLowerCase()
-                console.log('approve2')
 
                 await queries.insertOrUpdateApproves(token, tokenName, deployer)
                 // check if the token is in the key:pair isInTable
@@ -107,27 +105,16 @@ async function scanForApprovals(ctx, tx) {
                     reply_markup: replyMarkup
                 });
             }
-                console.log('sendmessage')
 
                 break
 
             default:
-                const data = await queries.getRowFromApproves(tx.to);
-
-                if (data === undefined) break;
-
-                if (
-                    (
-                        [
-                            '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
-                            '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
-                            '0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B'
-                        ]
-                            .includes(tx.to)
-                    )
-                    && tx.from != data.deployer
-                )
-                    await queries.deleteToken(tx.to);
+                isInTable = await queries.getRowFromApproves(tx.to);
+                if (isInTable === undefined) break;
+                const token = tx.to
+                const mcap = await utils.getMarketCap(ctx, token)
+                if (mcap === undefined) break;
+                await queries.deleteToken(tx.to);
 
                 break
 

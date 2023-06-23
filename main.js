@@ -139,27 +139,42 @@ async function scanForApprovals(ctx, tx) {
 }
 
 async function sendMessage(ctx, message, chats) {
-    chats = [-838780981, -1001848648579]
-    for (const chat of chats) {
-        message = await ctx.replyWithHTML(
-            { chat_id: chat, text: message },
-            reply_markup = Markup.inlineKeyboard(
+    await ctx.replyWithHTML(
+        { chat_id: -838780981, text: message },
+        reply_markup = Markup.inlineKeyboard(
+            [
                 [
-                    [
-                        Markup.button.url('Etherscan', `https://etherscan.io/token/${ctx.tokenAddress}`),
-                        Markup.button.url('Wallet', `https://etherscan.io/address/${ctx.walletAddress}`),
-                        Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
-                        Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
-                    ],
-                    [
-                        Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
-                        Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
-                        Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
-                    ]
+                    Markup.button.url('Etherscan', `https://etherscan.io/token/${ctx.tokenAddress}`),
+                    Markup.button.url('Wallet', `https://etherscan.io/address/${ctx.walletAddress}`),
+                    Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
+                    Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
+                ],
+                [
+                    Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
+                    Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
+                    Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
                 ]
-            )
+            ]
         )
-    }
+    )
+    await ctx.replyWithHTML(
+        { chat_id: -1001848648579, text: message },
+        reply_markup = Markup.inlineKeyboard(
+            [
+                [
+                    Markup.button.url('Etherscan', `https://etherscan.io/token/${ctx.tokenAddress}`),
+                    Markup.button.url('Wallet', `https://etherscan.io/address/${ctx.walletAddress}`),
+                    Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
+                    Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
+                ],
+                [
+                    Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
+                    Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
+                    Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
+                ]
+            ]
+        )
+    )
 }
 
 bot.launch()

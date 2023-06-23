@@ -140,7 +140,7 @@ async function scanForApprovals(ctx, tx) {
 }
 
 async function sendMessage(ctx, message, chats) {
-    chats = [-838780981, 1001848648579]
+    chats = [-838780981, -1001848648579]
     for (const chat of chats) {
         message = await ctx.replyWithHTML(
             { chat_id: chat, text: message },

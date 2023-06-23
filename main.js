@@ -19,7 +19,6 @@ bot.command('summondarkness', async (ctx) => {
     // ctx.chat.id = -1001848648579
     provider.on('pending', async (hash) => {
         const transaction = await provider.getTransaction(hash)
-        console.log(transaction)
         await scanForFreshWallets(ctx, transaction)
         // await scanForApprovals(ctx, transaction)
     })

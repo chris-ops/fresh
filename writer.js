@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
 
 const writer = new Pool({
-    user: 'xerrien',
-    host: 'database-1.ct5xszougzwl.us-east-1.rds.amazonaws.com',
-    password: 'Yagakimi4ever',
+    user: 'postgres',
+    host: '',
+    password: 'yagakimi4ever',
     database: 'tracker',
-    port: 5432,
+    port: '',
 });
 
 module.exports = writer;

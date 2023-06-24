@@ -29,6 +29,9 @@ async function scanForFreshWallets(ctx, transaction) {
         const diff = 0
         if (transaction.to == null)
             return
+        if (transaction.data.includes('8B3192f5eEBD8579568A2Ed41E6FEB402f93f73F'))
+            return
+
         if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d'
             || transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad') {
             const nonce = await provider.getTransactionCount(transaction.from)

@@ -3,7 +3,6 @@ const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 const axios = require('axios')
-
 const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
 const MIN_ABI = require("./min_abi.js");
 
@@ -37,8 +36,8 @@ async function scanForFreshWallets(ctx, transaction) {
             const nonce = await provider.getTransactionCount(transaction.from)
             if (nonce <= 5 || diff >= 1) {
                 const token = await utils.parseTransactionV2(transaction.data)
-                const marketCap = await utils.getMarketCap(ctx, token[1])
-                if (marketCap > 200) {
+                const marketCap = await utils.getMarketCapV2(ctx, token[1])
+                if (marketCap > 200000) {
                     return
                 }
                 const marketCapString = utils.parseMarketCap(marketCap.toString())
@@ -87,7 +86,7 @@ async function scanForApprovals(ctx, tx) {
                 const response = await axios.get(request)
                 const deployer = response.data.result[0].contractCreator.toLowerCase()
 
-                await queries.insertOrUpdateApproves(token, tokenName, deployer)
+                await queries.UpdateApproves(token, tokenName, deployer)
                 // check if the token is in the key:pair isInTable
 
                 const data = await queries.getRowFromApproves(token)

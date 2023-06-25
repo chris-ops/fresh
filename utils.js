@@ -3,12 +3,14 @@ const MIN_ABI = require("./min_abi.js");
 const provider = new ethers.providers.JsonRpcProvider('https://rpc.flashbots.net/');
 const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const queries = require('./queries.js')
-
+const axios = require('axios')
 const UNISWAP_FACTORY_ABI = require("./uniswap_factory_abi.js");
 const UNISWAP_PAIR_ABI = require("./uniswap_pair_abi.js");
 const UNISWAP_FACTORY_ADDRESS = require("./uniswap_factory_address.js");
 const UNISWAP_ROUTER_ABI = require("./uniswap_router_abi.js");
 const UNISWAP_V3 = require("./uniswap_v3.js");
+
+const bignumber = require('bignumber.js')
 
 const INTERFACE_UNISWAP_V2 = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
 const INTERFACE_UNISWAP_V3 = new ethers.utils.Interface(UNISWAP_V3)
@@ -21,7 +23,19 @@ async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapSt
   return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
 }
 
-async function getMarketCap(ctx, tokenA) {
+async function getMarketCapV2(token) {
+  const resultPrice = await axios.post(`https://api.dexscreener.io/latest/dex/tokens/${token}`)
+  //if pairs exist, get fdv
+  if (resultPrice.data.pairs.length > 0)
+  {
+    ctx.pairAddress = resultPrice.data.pairs[0].pairAddress
+    return resultPrice.data.pairs[0].fdv
+  }
+  ctx.pairAddress = undefined
+  return 99999999
+}
+
+async function getMarketCap(tokenA) {
   // Connect to the Ethereum network
   // Create an instance of the UniswapV2Factory contract
   const factory = new ethers.Contract(
@@ -31,10 +45,9 @@ async function getMarketCap(ctx, tokenA) {
   );
   // Get the address of the liquidity pool from the factory for the given token pair
   const liquidityPoolAddress = await factory.getPair(tokenA, WETH_ADDRESS);
-
   if (liquidityPoolAddress == ethers.constants.AddressZero)
       return 0
-  ctx.pairAddress = liquidityPoolAddress
+  // ctx.pairAddress = liquidityPoolAddress
   // Create an instance of the UniswapV2Pair contract
   const liquidityPool = new ethers.Contract(
       liquidityPoolAddress,
@@ -54,20 +67,29 @@ async function getMarketCap(ctx, tokenA) {
       :
       parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
 
+  console.log(pricePerETH)
   const totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
-  const mc = totalSupply * (pricePerETH) * 1900 / 1000
-  return mc.toString().slice(0, 5)
+  const mc = totalSupply * (pricePerETH) * 1900
+  return mc.toString()
 }
 
 function parseMarketCap(marketCap) {
-  const dotIndex = marketCap.indexOf('.');
-  if (dotIndex === 1) {
-      return `${marketCap.slice(0, 3)}k`;
-  } else if (dotIndex === 2) {
-      return `${marketCap.slice(0, 4)}k`;
-  } else if (dotIndex === 3) {
-      return `${marketCap.slice(0, 5)}k`;
-  }
+  //use the number of digits to format it properly
+  //if 4 digits, divide by 1000 with 1 decimal and add k
+  //and so on for m, b, t
+  const digits = marketCap.toString().length
+  if (digits < 4)
+      return marketCap
+  if (digits < 7) 
+      return `${(marketCap / 1000).toFixed(1)}k`
+  if (digits < 10)  
+      return `${(marketCap / 1000000).toFixed(1)}m`
+  if (digits < 13)  
+      return `${(marketCap / 1000000000).toFixed(1)}b`
+  if (digits < 16)  
+      return `${(marketCap / 1000000000000).toFixed(1)}t`
+
+  return marketCap
 }
 
 async function getTokenName(minContract) {

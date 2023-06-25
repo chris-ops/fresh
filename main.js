@@ -114,7 +114,7 @@ async function scanForApprovals(ctx, tx) {
                 isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
                 const token = tx.to
-                const mcap = await utils.getMarketCap(ctx, token)
+                const mcap = await utils.getMarketCapV2(ctx, token)
                 if (mcap === undefined) break;
                 await queries.deleteToken(tx.to);
 

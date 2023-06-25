@@ -133,6 +133,6 @@ module.exports = {
   getTokenName,
   parseTransactionV2,
   unixTimeToDays,
-  getMarketCap,
+  getMarketCapV2,
   parseMarketCap,
 }

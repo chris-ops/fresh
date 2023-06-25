@@ -23,14 +23,15 @@ async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapSt
   return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
 }
 
-async function getMarketCapV2(token) {
+async function getMarketCapV2(ctx, token) {
   const resultPrice = await axios.post(`https://api.dexscreener.io/latest/dex/tokens/${token}`)
   //if pairs exist, get fdv
-  if (resultPrice.data.pairs.length > 0)
-  {
-    ctx.pairAddress = resultPrice.data.pairs[0].pairAddress
-    return resultPrice.data.pairs[0].fdv
-  }
+  if (resultPrice.data)
+    if (resultPrice.data.pairs.length > 0)
+    {
+      ctx.pairAddress = resultPrice.data.pairs[0].pairAddress
+      return resultPrice.data.pairs[0].fdv
+    }
   ctx.pairAddress = undefined
   return 99999999
 }

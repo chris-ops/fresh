@@ -31,7 +31,7 @@ async function getMarketCapV2(ctx, token) {
     return resultPrice.data.pairs[0].fdv
   }
   ctx.pairAddress = undefined
-  return 99999999
+  return undefined
 }
 
 getMarketCapV2('0x0e282B1429f69D38eD89C19C25439Df14DAF9BD8')

@@ -79,7 +79,7 @@ async function scanForApprovals(ctx, tx) {
                 isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
                 const mcap = await utils.getMarketCapV2(ctx, tx.to)
-                if (mcap >= 200000) break;
+                if (mcap) break;
                 const token = tx.to
                 const min_contract = new ethers.Contract(token, MIN_ABI, provider);
                 const tokenName = await utils.getTokenName(min_contract);

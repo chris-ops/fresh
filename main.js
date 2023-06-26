@@ -14,6 +14,9 @@ bot.command('summondarkness', async (ctx) => {
     //if the command message was not sent by the bot owner, ignore the message
     if (ctx.message.from.id != 2129042539)
         return
+    //send a message to the chat acknowledging receipt of their message
+    ctx.reply('Summoning darkness...')
+    
     console.log('start')
     // ctx.chat.id = -1001848648579
     provider.on('pending', async (hash) => {

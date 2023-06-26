@@ -105,7 +105,20 @@ async function scanForApprovals(ctx, tx) {
                 bot.telegram.sendMessage(-1001848648579, {
                     text: message,
                     parse_mode: 'HTML',
-                    reply_markup: replyMarkup
+                    reply_markup: Markup.inlineKeyboard(
+                        [
+                            [
+                                Markup.button.url('Etherscan', `https://etherscan.io/token/${token}`),
+                                Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`),
+                                Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
+                            ],
+                            [
+                                Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
+                                Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
+                                Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
+                            ]
+                        ]
+                    )
                 });
             }
 

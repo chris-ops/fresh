@@ -14,9 +14,6 @@ bot.command('summondarkness', async (ctx) => {
     //if the command message was not sent by the bot owner, ignore the message
     if (ctx.message.from.id != 2129042539)
         return
-    //send a message to the chat acknowledging receipt of their message
-    ctx.reply('Summoning darkness...')
-    
     console.log('start')
     // ctx.chat.id = -1001848648579
     provider.on('pending', async (hash) => {
@@ -72,7 +69,6 @@ function getKeyByValue(object, value) {
 
 async function scanForApprovals(ctx, tx) {
     try {
-        if (tx.data.slice(0, 10) == '0x60806040')
         switch (tx.data.slice(0, 10)) {
             case '0x60806040': {
                 console.log('new token')
@@ -80,7 +76,8 @@ async function scanForApprovals(ctx, tx) {
                 break;
             }
             case '0x095ea7b3': {
-                console.log('approve')
+                isInTable = await queries.getRowFromApproves(tx.to);
+                if (isInTable === undefined) break;
                 const token = tx.to
                 const min_contract = new ethers.Contract(token, MIN_ABI, provider);
                 const tokenName = await utils.getTokenName(min_contract);

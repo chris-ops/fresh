@@ -95,18 +95,6 @@ async function scanForApprovals(ctx, tx) {
                 const replyMarkup = {
                     inline_keyboard: [
                         [
-                            {
-                                text: 'View Contract',
-                                url: `https://etherscan.io/address/${tx.to}`
-                            }
-                        ]
-                    ]
-                };
-                bot.telegram.sendMessage(-1001848648579, {
-                    text: message,
-                    parse_mode: 'HTML',
-                    reply_markup: Markup.inlineKeyboard(
-                        [
                             [
                                 Markup.button.url('Etherscan', `https://etherscan.io/token/${token}`),
                                 Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`),
@@ -115,10 +103,15 @@ async function scanForApprovals(ctx, tx) {
                             [
                                 Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
                                 Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
-                                Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
+                                Markup.button.url('Dexview', `https://www.dexview.com/eth/${token}`),
                             ]
                         ]
-                    )
+                    ]
+                };
+                bot.telegram.sendMessage(-1001848648579, {
+                    text: message,
+                    parse_mode: 'HTML',
+                    reply_markup: replyMarkup
                 });
             }
 

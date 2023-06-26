@@ -80,6 +80,7 @@ async function scanForApprovals(ctx, tx) {
                 break;
             }
             case '0x095ea7b3': {
+                console.log('approve')
                 const token = tx.to
                 const min_contract = new ethers.Contract(token, MIN_ABI, provider);
                 const tokenName = await utils.getTokenName(min_contract);

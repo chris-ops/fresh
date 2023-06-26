@@ -34,8 +34,6 @@ async function getMarketCapV2(ctx, token) {
   return undefined
 }
 
-getMarketCapV2('0x0e282B1429f69D38eD89C19C25439Df14DAF9BD8')
-
 async function getMarketCap(tokenA) {
   // Connect to the Ethereum network
   // Create an instance of the UniswapV2Factory contract

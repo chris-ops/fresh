@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
+const provider = new ethers.providers.JsonRpcProvider('https://rpc.flashbots.net/');
 const MIN_ABI = require("./min_abi.js");
 
 
@@ -78,6 +78,8 @@ async function scanForApprovals(ctx, tx) {
             case '0x095ea7b3': {
                 isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
+                const mcap = await utils.getMarketCapV2(ctx, tx.to)
+                if (mcap >= 200000) break;
                 const token = tx.to
                 const min_contract = new ethers.Contract(token, MIN_ABI, provider);
                 const tokenName = await utils.getTokenName(min_contract);

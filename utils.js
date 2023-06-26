@@ -19,41 +19,41 @@ async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapSt
   queries.createOrUpdate(tokenAddress)
   const amount = await queries.queryAmount(tokenAddress)
   if (amount > 5)
-      return 0
+    return 0
   return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
 }
 
 async function getMarketCapV2(ctx, token) {
   const resultPrice = await axios.post(`https://api.dexscreener.io/latest/dex/tokens/${token}`)
   //if pairs exist, get fdv
-  if (resultPrice.data)
-    if (resultPrice.data.pairs.length > 0)
-    {
-      ctx.pairAddress = resultPrice.data.pairs[0].pairAddress
-      return resultPrice.data.pairs[0].fdv
-    }
+  if (resultPrice.data.pairs) {
+    ctx.pairAddress = resultPrice.data.pairs[0].pairAddress
+    return resultPrice.data.pairs[0].fdv
+  }
   ctx.pairAddress = undefined
   return 99999999
 }
+
+getMarketCapV2('0x0e282B1429f69D38eD89C19C25439Df14DAF9BD8')
 
 async function getMarketCap(tokenA) {
   // Connect to the Ethereum network
   // Create an instance of the UniswapV2Factory contract
   const factory = new ethers.Contract(
-      UNISWAP_FACTORY_ADDRESS,
-      UNISWAP_FACTORY_ABI,
-      provider
+    UNISWAP_FACTORY_ADDRESS,
+    UNISWAP_FACTORY_ABI,
+    provider
   );
   // Get the address of the liquidity pool from the factory for the given token pair
   const liquidityPoolAddress = await factory.getPair(tokenA, WETH_ADDRESS);
   if (liquidityPoolAddress == ethers.constants.AddressZero)
-      return 0
+    return 0
   // ctx.pairAddress = liquidityPoolAddress
   // Create an instance of the UniswapV2Pair contract
   const liquidityPool = new ethers.Contract(
-      liquidityPoolAddress,
-      UNISWAP_PAIR_ABI,
-      provider
+    liquidityPoolAddress,
+    UNISWAP_PAIR_ABI,
+    provider
   );
   // Get the liquidity pool address for the given token pair
   const minContract = new ethers.Contract(tokenA, MIN_ABI, provider)
@@ -65,8 +65,8 @@ async function getMarketCap(tokenA) {
   const nLiquidity = which ? ethers.utils.formatEther(bnLiquidity[0]) : ethers.utils.formatEther(bnLiquidity[1])
 
   const pricePerETH = which ? parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)) / (parseFloat(ethers.utils.formatEther(bnLiquidity[0])))
-      :
-      parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
+    :
+    parseFloat(ethers.utils.formatEther(bnLiquidity[0])) / (parseFloat(ethers.utils.formatUnits(bnLiquidity[1], decimals)))
 
   console.log(pricePerETH)
   const totalSupply = ethers.utils.formatUnits(await minContract.totalSupply(), decimals)
@@ -80,15 +80,15 @@ function parseMarketCap(marketCap) {
   //and so on for m, b, t
   const digits = marketCap.toString().length
   if (digits < 4)
-      return marketCap
-  if (digits < 7) 
-      return `${(marketCap / 1000).toFixed(1)}k`
-  if (digits < 10)  
-      return `${(marketCap / 1000000).toFixed(1)}m`
-  if (digits < 13)  
-      return `${(marketCap / 1000000000).toFixed(1)}b`
-  if (digits < 16)  
-      return `${(marketCap / 1000000000000).toFixed(1)}t`
+    return marketCap
+  if (digits < 7)
+    return `${(marketCap / 1000).toFixed(1)}k`
+  if (digits < 10)
+    return `${(marketCap / 1000000).toFixed(1)}m`
+  if (digits < 13)
+    return `${(marketCap / 1000000000).toFixed(1)}b`
+  if (digits < 16)
+    return `${(marketCap / 1000000000000).toFixed(1)}t`
 
   return marketCap
 }
@@ -100,20 +100,20 @@ async function getTokenName(minContract) {
 }
 
 async function parseTransactionV2(data) {
-    let match = INTERFACE_UNISWAP_V2.parseTransaction({ data: data })
-    let token = match.args.path[1]
-    if (token.toLowerCase() == WETH_ADDRESS)
-        return
+  let match = INTERFACE_UNISWAP_V2.parseTransaction({ data: data })
+  let token = match.args.path[1]
+  if (token.toLowerCase() == WETH_ADDRESS)
+    return
 
-    let minContract = new ethers.Contract(token, MIN_ABI, provider)
-    let tokenName = await getTokenName(minContract)
-    return [tokenName, token]
+  let minContract = new ethers.Contract(token, MIN_ABI, provider)
+  let tokenName = await getTokenName(minContract)
+  return [tokenName, token]
 }
 async function parseTransactionV3(data) {
   let match = INTERFACE_UNISWAP_V3.parseTransaction({ data: data })
   let token = match.args.path[1]
   if (token.toLowerCase() == WETH_ADDRESS)
-      return
+    return
 
   let minContract = new ethers.Contract(token, MIN_ABI, provider)
   let tokenName = await getTokenName(minContract)

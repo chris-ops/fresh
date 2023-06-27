@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('wss://greatest-smart-bush.discover.quiknode.pro/');
+const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
 const MIN_ABI = require("./min_abi.js");
 
 

@@ -89,7 +89,7 @@ async function scanForApprovals(ctx, tx) {
                 // check if the token is in the key:pair isInTable
 
                 const data = await queries.getRowFromApproves(token)
-                if (skip < 3) {
+                if (data.skip < 3) {
                     await queries.updateSkip(token)
                     return
                 }

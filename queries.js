@@ -22,7 +22,7 @@ async function createTable() {
         tokenname TEXT,
         deployer TEXT,
         approves INTEGER,
-        skip INTEGER
+        skip INTEGER default 0
     );
   `;
     await writer.query(createTableQuery2);

@@ -27,11 +27,10 @@ async function getMarketCapV2(ctx, token) {
   const resultPrice = await axios.post(`https://api.dexscreener.io/latest/dex/tokens/${token}`)
   //if pairs exist, get fdv
   if (resultPrice.data.pairs) {
-    ctx.pairAddress = resultPrice.data.pairs[0].pairAddress
-    ctx.tokenName = `${resultPrice.data.pairs[0].baseToken.name} (${resultPrice.data.pairs[0].baseToken.symbol})` 
-    return [resultPrice.data.pairs[0].fdv, ctx.tokenName, ctx.pairAddress]
+    const {pairAddress} = resultPrice.data.pairs[0]
+    const tokenName = `${resultPrice.data.pairs[0].baseToken.name} (${resultPrice.data.pairs[0].baseToken.symbol})` 
+    return [resultPrice.data.pairs[0].fdv, tokenName, pairAddress]
   }
-  ctx.pairAddress = undefined
   return [undefined, undefined, undefined]
 }
 

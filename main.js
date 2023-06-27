@@ -94,7 +94,7 @@ async function scanForApprovals(ctx, tx) {
                     return
                 }
 
-                const message = `${data.tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
+                const message = `${tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
 
                 await ctx.replyWithHTML(
                     { chatId: -1001848648579, text: message },

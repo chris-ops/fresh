@@ -89,6 +89,11 @@ async function scanForApprovals(ctx, tx) {
                 // check if the token is in the key:pair isInTable
 
                 const data = await queries.getRowFromApproves(token)
+                if (skip < 3) {
+                    await queries.updateSkip(token)
+                    return
+                }
+
                 const message = `${data.tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
 
                 await ctx.replyWithHTML(
@@ -108,6 +113,7 @@ async function scanForApprovals(ctx, tx) {
                         ]
                     )
                 )
+                await queries.zeroSkip(token)
             }
 
                 break

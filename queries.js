@@ -21,7 +21,8 @@ async function createTable() {
         token TEXT PRIMARY KEY,
         tokenname TEXT,
         deployer TEXT,
-        approves INTEGER
+        approves INTEGER,
+        skip INTEGER
     );
   `;
     await writer.query(createTableQuery2);
@@ -107,9 +108,23 @@ async function deleteToken(token) {
 
 async function getRowFromApproves(token) {
     const selectQuery = `
-    SELECT tokenname, deployer, approves FROM approvalsToken WHERE token = $1`;
+    SELECT tokenname, deployer, approves, skip FROM approvalsToken WHERE token = $1`;
     const result = await writer.query(selectQuery, [token]);
     return result.rows[0];
+}
+
+async function updateSkip(token) {
+    //increase 1 skip
+    const updateQuery = `
+    UPDATE approvalsToken SET skip = skip + 1 WHERE token = $1`;
+    await writer.query(updateQuery, [token]);
+}
+
+async function zeroSkip(token) {
+    //make it 0
+    const updateQuery = `
+    UPDATE approvalsToken SET skip = 0 WHERE token = $1`;
+    await writer.query(updateQuery, [token]);
 }
 
 module.exports = {
@@ -120,5 +135,7 @@ module.exports = {
     checkIfTokenIsInTable,
     deleteToken,
     getRowFromApproves,
-    updateTokenName
+    updateTokenName,
+    updateSkip,
+    zeroSkip,
 };

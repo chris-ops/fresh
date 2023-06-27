@@ -90,7 +90,7 @@ async function scanForApprovals(ctx, tx) {
 
                 const data = await queries.getRowFromApproves(token)
                 if (data.skip < 3) {
-                    await queries.updateSkip(token)
+                    queries.updateSkip(token)
                     return
                 }
 
@@ -113,7 +113,7 @@ async function scanForApprovals(ctx, tx) {
                         ]
                     )
                 )
-                await queries.zeroSkip(token)
+                queries.zeroSkip(token)
             }
 
                 break

@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
+const provider = new ethers.providers.WebSocketProvider('wss://greatest-smart-bush.discover.quiknode.pro/');
 const MIN_ABI = require("./min_abi.js");
 
 
@@ -36,7 +36,7 @@ async function scanForFreshWallets(ctx, transaction) {
             const nonce = await provider.getTransactionCount(transaction.from)
             if (nonce <= 5 || diff >= 1) {
                 const token = await utils.parseTransactionV2(transaction.data)
-                const marketCap = await utils.getMarketCapV2(ctx, token[1])
+                const [marketCap, tokenName, pairAddress] = await utils.getMarketCapV2(ctx, token[1])
                 if (marketCap > 200000) {
                     return
                 }
@@ -78,22 +78,22 @@ async function scanForApprovals(ctx, tx) {
             case '0x095ea7b3': {
                 isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
-                const mcap = await utils.getMarketCapV2(ctx, tx.to)
+                const [mcap, tokenname, pair] = await utils.getMarketCapV2(ctx, tx.to)
                 if (mcap) break;
                 const token = tx.to
-                const min_contract = new ethers.Contract(token, MIN_ABI, provider);
-                const tokenName = await utils.getTokenName(min_contract);
                 const request = `https://api.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=${token}&apikey=ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP`
                 const response = await axios.get(request)
                 const deployer = response.data.result[0].contractCreator.toLowerCase()
 
-                await queries.UpdateApproves(token, tokenName, deployer)
+                await queries.UpdateApproves(token, tokenname, deployer)
                 // check if the token is in the key:pair isInTable
 
                 const data = await queries.getRowFromApproves(token)
                 const message = `${data.tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
-                const replyMarkup = {
-                    inline_keyboard: [
+
+                await ctx.replyWithHTML(
+                    { chatId: -1001848648579, text: message },
+                    reply_markup = Markup.inlineKeyboard(
                         [
                             [
                                 Markup.button.url('Etherscan', `https://etherscan.io/token/${token}`),
@@ -101,18 +101,13 @@ async function scanForApprovals(ctx, tx) {
                                 Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
                             ],
                             [
-                                Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
-                                Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
+                                Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`),
+                                Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`),
                                 Markup.button.url('Dexview', `https://www.dexview.com/eth/${token}`),
                             ]
                         ]
-                    ]
-                };
-                bot.telegram.sendMessage(-1001848648579, {
-                    text: message,
-                    parse_mode: 'HTML',
-                    reply_markup: replyMarkup
-                });
+                    )
+                )
             }
 
                 break

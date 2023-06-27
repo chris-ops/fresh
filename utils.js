@@ -28,10 +28,11 @@ async function getMarketCapV2(ctx, token) {
   //if pairs exist, get fdv
   if (resultPrice.data.pairs) {
     ctx.pairAddress = resultPrice.data.pairs[0].pairAddress
-    return resultPrice.data.pairs[0].fdv
+    ctx.tokenName = `${resultPrice.data.pairs[0].baseToken.name} (${resultPrice.data.pairs[0].baseToken.symbol})` 
+    return [resultPrice.data.pairs[0].fdv, ctx.tokenName, ctx.pairAddress]
   }
   ctx.pairAddress = undefined
-  return undefined
+  return [undefined, undefined, undefined]
 }
 
 async function getMarketCap(tokenA) {

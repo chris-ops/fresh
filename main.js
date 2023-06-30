@@ -55,7 +55,7 @@ async function scanForFreshWallets(ctx, transaction) {
                 )
                 if (text == 0)
                     return
-                sendMessage(ctx, text)
+                sendMessage(ctx, text, pairAddress)
             }
         }
     } catch (error) {
@@ -147,8 +147,8 @@ async function sendMessage(ctx, message, chats) {
                     Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
                 ],
                 [
-                    Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
-                    Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
+                    Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`),
+                    Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`),
                     Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
                 ]
             ]

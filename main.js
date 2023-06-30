@@ -113,7 +113,7 @@ async function scanForApprovals(ctx, tx) {
                         ]
                     )
                 )
-                queries.zeroSkip(token)
+                await queries.zeroSkip(token)
             }
 
                 break
@@ -135,7 +135,7 @@ async function scanForApprovals(ctx, tx) {
     }
 }
 
-async function sendMessage(ctx, message, chats) {
+async function sendMessage(ctx, message, pairAddress) {
     await ctx.replyWithHTML(
         { text: message },
         reply_markup = Markup.inlineKeyboard(

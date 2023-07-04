@@ -2,6 +2,7 @@ const { ethers } = require("ethers");
 const MIN_ABI = require("./min_abi.js");
 const provider = new ethers.providers.JsonRpcProvider('https://rpc.flashbots.net/');
 const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+const USDT = '0xdac17f958d2ee523a2206206994597c13d831ec7'
 const queries = require('./queries.js')
 const axios = require('axios')
 const UNISWAP_FACTORY_ABI = require("./uniswap_factory_abi.js");

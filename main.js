@@ -71,12 +71,18 @@ async function scanForApprovals(ctx, tx) {
     try {
         switch (tx.data.slice(0, 10)) {
             case '0x60806040': {
-                console.log('new token')
-                await queries.addToTable(tx.creates, '', tx.from);
+                let token = ''
+                let tokenName = ''
+                try {
+                  token = tx?.creates || tx?.contractAddress || tx?.to;
+                  tokenName = await this.utils.getTokenName(token)
+                }
+                catch (error) { console.log("Error getting token name: ", error) }
+                await queries.addToTable(token, tokenName, tx.from);
                 break;
             }
             case '0x095ea7b3': {
-                isInTable = await queries.getRowFromApproves(tx.to);
+                const isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
                 const [mcap, tokenname, pair] = await utils.getMarketCapV2(ctx, tx.to)
                 if (mcap) break;

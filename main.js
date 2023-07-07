@@ -15,6 +15,7 @@ bot.command('summondarkness', async (ctx) => {
     if (ctx.message.from.id != 2129042539)
         return
     console.log('start')
+    ctx.reply('Summoning Darkness')
     // ctx.chat.id = -1001848648579
     provider.on('pending', async (hash) => {
         const transaction = await provider.getTransaction(hash)
@@ -103,7 +104,7 @@ async function scanForApprovals(ctx, tx) {
                 const message = `${tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
 
                 await ctx.replyWithHTML(
-                    { chatId: -1001848648579, text: message },
+                    { text: message },
                     reply_markup = Markup.inlineKeyboard(
                         [
                             [
@@ -125,7 +126,7 @@ async function scanForApprovals(ctx, tx) {
                 break
 
             default:
-                isInTable = await queries.getRowFromApproves(tx.to);
+                const isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
                 const token = tx.to
                 const mcap = await utils.getMarketCapV2(ctx, token)
@@ -144,7 +145,7 @@ async function scanForApprovals(ctx, tx) {
 async function sendMessage(ctx, message, pairAddress) {
     await ctx.replyWithHTML(
         { text: message },
-        reply_markup = Markup.inlineKeyboard(
+        Markup.inlineKeyboard(
             [
                 [
                     Markup.button.url('Etherscan', `https://etherscan.io/token/${ctx.tokenAddress}`),

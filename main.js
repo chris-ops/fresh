@@ -17,16 +17,15 @@ bot.command('summondarkness', async (ctx) => {
     console.log('start')
     ctx.reply('Summoning Darkness')
     // ctx.chat.id = -1001848648579
-    provider.on('block', async (blockNumber) => {
-        const transactions = await provider.getBlockWithTransactions(blockNumber)
-        await scanForFreshWallets(ctx, transactions)
-        await scanForApprovals(ctx, transactions)
+    provider.on('pending', async (hash) => {
+        const transaction = await provider.getTransaction(hash)
+        await scanForFreshWallets(ctx, transaction)
+        await scanForApprovals(ctx, transaction)
     })
 }
 )
 async function scanForFreshWallets(ctx, transaction) {
     try {
-        for (transaction of transaction.transactions) {
         const diff = 0
         if (transaction.to == null)
             return
@@ -42,7 +41,6 @@ async function scanForFreshWallets(ctx, transaction) {
                     token = await utils.parseTransactionV2(transaction.data)
                 else if (transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad')
                     token = await utils.parseTransactionV3(transaction.data)
-                    
                 const [marketCap, tokenName, pairAddress] = await utils.getMarketCapV2(ctx, token[1])
                 if (marketCap > 200000) {
                     return
@@ -65,7 +63,6 @@ async function scanForFreshWallets(ctx, transaction) {
                 sendMessage(ctx, text, pairAddress)
             }
         }
-    }
     } catch (error) {
         console.log(error)
         return

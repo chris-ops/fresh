@@ -17,15 +17,16 @@ bot.command('summondarkness', async (ctx) => {
     console.log('start')
     ctx.reply('Summoning Darkness')
     // ctx.chat.id = -1001848648579
-    provider.on('pending', async (hash) => {
-        const transaction = await provider.getTransaction(hash)
-        await scanForFreshWallets(ctx, transaction)
-        await scanForApprovals(ctx, transaction)
+    provider.on('block', async (blockNumber) => {
+        const transactions = await provider.getBlockWithTransactions(blockNumber)
+        await scanForFreshWallets(ctx, transactions)
+        await scanForApprovals(ctx, transactions)
     })
 }
 )
 async function scanForFreshWallets(ctx, transaction) {
     try {
+        for (transaction of transaction.transactions) {
         const diff = 0
         if (transaction.to == null)
             return
@@ -59,6 +60,7 @@ async function scanForFreshWallets(ctx, transaction) {
                 sendMessage(ctx, text, pairAddress)
             }
         }
+    }
     } catch (error) {
         console.log(error)
         return

@@ -109,14 +109,29 @@ async function parseTransactionV2(data) {
   return [tokenName, token]
 }
 async function parseTransactionV3(data) {
-  let match = INTERFACE_UNISWAP_V3.parseTransaction({ data: data })
-  let token = match.args.path[1]
+  const match = INTERFACE_UNISWAP_V3.parseTransaction({ data: data })
+  const splitData = splitStringV2(match.args.inputs[1])
+  //get the last element of the array
+  let tokenAddress = splitData[splitData.length - 1]
+  //get the last 40 characters
+  tokenAddress = tokenAddress.slice(tokenAddress.length - 40)
+  const token = `0x${tokenAddress}`
   if (token.toLowerCase() == WETH_ADDRESS)
     return
 
-  let minContract = new ethers.Contract(token, MIN_ABI, provider)
-  let tokenName = await getTokenName(minContract)
+  const minContract = new ethers.Contract(token, MIN_ABI, provider)
+  const tokenName = await getTokenName(minContract)
   return [tokenName, token]
+}
+function splitStringV2(str) {
+  const rest = str.slice(10)
+  const chunks = []
+  // return chunks only without converting
+  for (let i = 0; i < rest.length; i += 64) {
+      const chunk = rest.slice(i, i + 64)
+      chunks.push(chunk)
+  }
+  return chunks
 }
 
 function unixTimeToDays(unixTime) {
@@ -132,6 +147,7 @@ module.exports = {
   mount_text,
   getTokenName,
   parseTransactionV2,
+  parseTransactionV3,
   unixTimeToDays,
   getMarketCapV2,
   parseMarketCap,

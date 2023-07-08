@@ -37,7 +37,12 @@ async function scanForFreshWallets(ctx, transaction) {
             || transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad') {
             const nonce = await provider.getTransactionCount(transaction.from)
             if (nonce <= 5 || diff >= 1) {
-                const token = await utils.parseTransactionV2(transaction.data)
+                let token = ''
+                if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d')
+                    token = await utils.parseTransactionV2(transaction.data)
+                else if (transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad')
+                    token = await utils.parseTransactionV3(transaction.data)
+                    
                 const [marketCap, tokenName, pairAddress] = await utils.getMarketCapV2(ctx, token[1])
                 if (marketCap > 200000) {
                     return

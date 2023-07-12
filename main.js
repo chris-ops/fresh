@@ -112,7 +112,7 @@ async function scanForApprovals(ctx, tx) {
                     reply_markup = Markup.inlineKeyboard(
                         [
                             [
-                                Markup.button.url('Etherscan', `https://cn.etherscan.io/token/${token}`),
+                                Markup.button.url('Etherscan', `https://cn.etherscan.com/token/${token}`),
                                 Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`),
                                 Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
                             ],
@@ -152,7 +152,7 @@ async function sendMessage(ctx, message, pairAddress) {
         Markup.inlineKeyboard(
             [
                 [
-                    Markup.button.url('Etherscan', `https://cn.etherscan.io/token/${ctx.tokenAddress}`),
+                    Markup.button.url('Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`),
                     Markup.button.url('Wallet', `https://etherscan.io/address/${ctx.walletAddress}`),
                     Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
                     Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)

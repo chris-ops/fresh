@@ -4,9 +4,22 @@ const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 const axios = require('axios')
 const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
+const etherscanProvider = new ethers.providers.EtherscanProvider(
+    'homestead',
+    'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP'
+)
 const MIN_ABI = require("./min_abi.js");
 
-
+function calculateAverageTime(timestamps) {
+    const totalTimestamps = timestamps.length;
+    const sum = timestamps.reduce((acc, timestamp) => acc + timestamp, 0);
+    const averageTimestamp = Math.floor(sum / totalTimestamps);
+  
+    // Convert average timestamp to readable date and time format
+    const averageDate = new Date(averageTimestamp * 1000);
+  
+    return averageDate.toISOString();
+  }
 const bot = new Telegraf('5787240482:AAGT0lM1T15cOrSBdscUm04nYPquTbx7LmY')
 
 //create function to get pending transactions
@@ -24,9 +37,12 @@ bot.command('summondarkness', async (ctx) => {
     })
 }
 )
+
+
+
 async function scanForFreshWallets(ctx, transaction) {
     try {
-        const diff = 0
+        let diff = 0
         if (transaction.to == null)
             return
         if (transaction.data.includes('8B3192f5eEBD8579568A2Ed41E6FEB402f93f73F'))
@@ -35,6 +51,18 @@ async function scanForFreshWallets(ctx, transaction) {
         if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d'
             || transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad') {
             const nonce = await provider.getTransactionCount(transaction.from)
+            etherscanProvider.getHistory(
+                transaction.from,
+                transaction.blockNumber - 10000,
+                ).then((history) => {
+                    const timestamps = history.map((tx) => tx.timestamp);
+                    const averageTime = calculateAverageTime(timestamps);
+                    //if averageTime is more than 1 day, add 1 to diff for each day
+                    if (averageTime > 86400) {
+                        diff = Math.floor(averageTime / 86400);
+                    }
+            });
+
             if (nonce <= 5 || diff >= 1) {
                 let token = ''
                 if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d')

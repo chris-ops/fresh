@@ -13,12 +13,8 @@ const MIN_ABI = require("./min_abi.js");
 function calculateAverageTime(timestamps) {
     const totalTimestamps = timestamps.length;
     const sum = timestamps.reduce((acc, timestamp) => acc + timestamp, 0);
-    const averageTimestamp = Math.floor(sum / totalTimestamps);
   
-    // Convert average timestamp to readable date and time format
-    const averageDate = new Date(averageTimestamp * 1000);
-  
-    return averageDate.toISOString();
+    return Math.floor(sum / totalTimestamps);
   }
 const bot = new Telegraf('5787240482:AAGT0lM1T15cOrSBdscUm04nYPquTbx7LmY')
 
@@ -57,9 +53,9 @@ async function scanForFreshWallets(ctx, transaction) {
                 ).then((history) => {
                     const timestamps = history.map((tx) => tx.timestamp);
                     const averageTime = calculateAverageTime(timestamps);
-                    //if averageTime is more than 1 day, add 1 to diff for each day
-                    if (averageTime > 86400) {
-                        diff = Math.floor(averageTime / 86400);
+                    //if averageTime is more than 1 day in unix time, add 1 to diff for each day
+                    if (averageTime < Date.now() / 1000 - 86400) {
+                        diff = Math.floor((Date.now() / 1000 - averageTime) / 86400);
                     }
             });
 

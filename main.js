@@ -60,6 +60,7 @@ async function scanForFreshWallets(ctx, transaction) {
             });
 
             if (nonce <= 5 || diff >= 1) {
+                let title = getTitle(nonce, diff)
                 let token = ''
                 if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d')
                     token = await utils.parseTransactionV2(transaction.data)
@@ -84,7 +85,9 @@ async function scanForFreshWallets(ctx, transaction) {
                 )
                 if (text == 0)
                     return
-                sendMessage(ctx, text, pairAddress)
+                //append text to title
+                const message = `<b>${title}</b>\n${text}`
+                sendMessage(ctx, message, pairAddress)
             }
         }
     } catch (error) {
@@ -168,6 +171,16 @@ async function scanForApprovals(ctx, tx) {
         console.log(error);
         return
     }
+}
+
+function getTitle(nonce, diff) {
+    return diff >= 1
+          ? nonce <= 5
+            ? 'FRESH / DORMANT'
+            : 'DORMANT'
+          : nonce <= 5
+          ? 'FRESH'
+          : '';
 }
 
 async function sendMessage(ctx, message, pairAddress) {

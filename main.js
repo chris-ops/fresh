@@ -16,7 +16,7 @@ function calculateAverageTime(timestamps) {
   
     return Math.floor(sum / totalTimestamps);
   }
-const bot = new Telegraf('5787240482:AAGT0lM1T15cOrSBdscUm04nYPquTbx7LmY')
+const bot = new Telegraf('5787240482:AAF_OHRj3-UyUHR6vEbMN0GOl-HCsulajxc')
 
 //create function to get pending transactions
 bot.command('summondarkness', async (ctx) => {
@@ -26,13 +26,18 @@ bot.command('summondarkness', async (ctx) => {
     console.log('start')
     ctx.reply('Summoning Darkness')
     // ctx.chat.id = -1001848648579
-    provider.on('pending', async (hash) => {
-        const transaction = await provider.getTransaction(hash)
-        await scanForFreshWallets(ctx, transaction)
-        await scanForApprovals(ctx, transaction)
+    provider.on('block', async (block) => {
+        try {
+            const blockWithTransactions = await provider.getBlockWithTransactions(block)
+            for (const transaction of blockWithTransactions.transactions) {
+                await scanForFreshWallets(ctx, transaction)
+                await scanForApprovals(ctx, transaction)
+            }
+        } catch (error) {
+            console.log('CRITICAL: ', error)
+        }
     })
-}
-)
+})
 
 
 

@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Telegraf, Markup } = require('telegraf');
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
+const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ffaf1d798e124abc8a0e23de2a0e02e6');
 const etherscanProvider = new ethers.providers.EtherscanProvider(
     'homestead',
     'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP'

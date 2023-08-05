@@ -1,9 +1,10 @@
 const { ethers } = require('ethers')
 const utils = require('./utils.js')
-const { Telegraf, Markup } = require('telegraf');
+const { Bot, InlineKeyboard } = require('grammy')
+const { Menu } = require('@grammyjs/menu')
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ffaf1d798e124abc8a0e23de2a0e02e6');
+const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
 const etherscanProvider = new ethers.providers.EtherscanProvider(
     'homestead',
     'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP'
@@ -13,33 +14,10 @@ const MIN_ABI = require("./min_abi.js");
 function calculateAverageTime(timestamps) {
     const totalTimestamps = timestamps.length;
     const sum = timestamps.reduce((acc, timestamp) => acc + timestamp, 0);
-  
+
     return Math.floor(sum / totalTimestamps);
   }
-const bot = new Telegraf('5787240482:AAF_OHRj3-UyUHR6vEbMN0GOl-HCsulajxc')
-
-//create function to get pending transactions
-bot.command('summondarkness', async (ctx) => {
-    //if the command message was not sent by the bot owner, ignore the message
-    if (ctx.message.from.id != 2129042539)
-        return
-    console.log('start')
-    ctx.reply('Summoning Darkness')
-    // ctx.chat.id = -1001848648579
-    provider.on('block', async (block) => {
-        try {
-            const blockWithTransactions = await provider.getBlockWithTransactions(block)
-            for (const transaction of blockWithTransactions.transactions) {
-                await scanForFreshWallets(ctx, transaction)
-                await scanForApprovals(ctx, transaction)
-            }
-        } catch (error) {
-            console.log('CRITICAL: ', error)
-        }
-    })
-})
-
-
+const bot = new Bot('6141661523:AAGbHviqlwvdZ-8SRXfHJq7eBmyeeS93YUQ')
 
 async function scanForFreshWallets(ctx, transaction) {
     try {
@@ -139,23 +117,25 @@ async function scanForApprovals(ctx, tx) {
 
                 const message = `${tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
 
-                await ctx.replyWithHTML(
-                    { text: message },
-                    reply_markup = Markup.inlineKeyboard(
-                        [
-                            [
-                                Markup.button.url('Etherscan', `https://cn.etherscan.com/token/${token}`),
-                                Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`),
-                                Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
-                            ],
-                            [
-                                Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`),
-                                Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`),
-                                Markup.button.url('Dexview', `https://www.dexview.com/eth/${token}`),
-                            ]
-                        ]
-                    )
-                )
+                // const menu = new Menu('root2').text(
+                //     'Etherscan', `https://cn.etherscan.com/token/${token}`
+                // ).text('Maestro', `https://t.me/MaestroSniperBot?start=${token}`)
+                //     .text('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
+                //     .row().text('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
+                //     .text('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
+                //     .text('Dexview', `https://www.dexview.com/eth/${token}`)
+                const inlineKeyboard = new InlineKeyboard().url(
+                    'Token', `https://cn.etherscan.com/token/${token}`
+                ).url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`)
+                    .url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
+                    .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
+                    .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
+                    .url('Dexview', `https://www.dexview.com/eth/${token}`)
+                    await ctx.reply(message, {
+                        reply_markup: inlineKeyboard,
+                        parse_mode: 'HTML'
+                    })
+
                 await queries.zeroSkip(token)
             }
 
@@ -189,42 +169,45 @@ function getTitle(nonce, diff) {
 }
 
 async function sendMessage(ctx, message, pairAddress) {
-    await ctx.replyWithHTML(
-        { text: message },
-        Markup.inlineKeyboard(
-            [
-                [
-                    Markup.button.url('Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`),
-                    Markup.button.url('Wallet', `https://cn.etherscan.com/address/${ctx.walletAddress}`),
-                    Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
-                    Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
-                ],
-                [
-                    Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`),
-                    Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`),
-                    Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
-                ]
-            ]
-        )
-    )
-    // await ctx.replyWithHTML(
-    //     { chat_id: -1001848648579, text: message },
-    //     reply_markup = Markup.inlineKeyboard(
-    //         [
-    //             [
-    //                 Markup.button.url('Etherscan', `https://etherscan.io/token/${ctx.tokenAddress}`),
-    //                 Markup.button.url('Wallet', `https://etherscan.io/address/${ctx.walletAddress}`),
-    //                 Markup.button.url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`),
-    //                 Markup.button.url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
-    //             ],
-    //             [
-    //                 Markup.button.url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${ctx.pairAddress}`),
-    //                 Markup.button.url('Dexscreener', `https://dexscreener.com/ethereum/${ctx.pairAddress}`),
-    //                 Markup.button.url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`),
-    //             ]
-    //         ]
-    //     )
-    // )
-}
 
-bot.launch()
+    // const menu = new Menu('root').text(
+    //     'Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`
+    // ).text('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`)
+    //     .text('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
+    //     .row().text('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`)
+    //     .text('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
+    //     .text('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`)
+    const inlineKeyboard = new InlineKeyboard().url(
+        'Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`
+    ).url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`)
+        .url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
+        .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`)
+        .url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
+        .url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`)
+
+        await ctx.reply(message, {
+            reply_markup: inlineKeyboard,
+            parse_mode: 'HTML'
+        })
+}
+//create function to get pending transactions
+const scan = (async (ctx) => {
+    //if the command message was not sent by the bot owner, ignore the message
+    if (ctx.message.from.id != 2129042539)
+        return
+    console.log('start')
+    ctx.reply('summoning darkness')
+    // ctx.chat.id = -1001848648579
+    provider.on('pending', async (hash) => {
+        try {
+            const transaction = await provider.getTransaction(hash)
+                await scanForFreshWallets(ctx, transaction)
+                await scanForApprovals(ctx, transaction)
+        } catch (error) {
+            console.log('CRITICAL: ', error)
+        }
+    })
+})
+
+bot.command('summondarkness', scan)
+bot.start()

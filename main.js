@@ -1,7 +1,6 @@
 const { ethers } = require('ethers')
 const utils = require('./utils.js')
 const { Bot, InlineKeyboard } = require('grammy')
-const { Menu } = require('@grammyjs/menu')
 const queries = require('./queries.js')
 const axios = require('axios')
 const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');

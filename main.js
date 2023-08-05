@@ -197,11 +197,13 @@ const scan = (async (ctx) => {
     console.log('start')
     ctx.reply('summoning darkness')
     // ctx.chat.id = -1001848648579
-    provider.on('pending', async (hash) => {
+    provider.on('block', async (block) => {
         try {
-            const transaction = await provider.getTransaction(hash)
+            const blockWithTransactions = await provider.getBlockWithTransactions(block)
+            for (const transaction of blockWithTransactions.transactions) {
                 await scanForFreshWallets(ctx, transaction)
                 await scanForApprovals(ctx, transaction)
+            }
         } catch (error) {
             console.log('CRITICAL: ', error)
         }

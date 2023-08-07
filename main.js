@@ -16,7 +16,7 @@ function calculateAverageTime(timestamps) {
 
     return Math.floor(sum / totalTimestamps);
   }
-const bot = new Bot('6141661523:AAGbHviqlwvdZ-8SRXfHJq7eBmyeeS93YUQ')
+const bot = new Bot('5787240482:AAF_OHRj3-UyUHR6vEbMN0GOl-HCsulajxc')
 
 async function scanForFreshWallets(ctx, transaction) {
     try {
@@ -44,10 +44,14 @@ async function scanForFreshWallets(ctx, transaction) {
             if (nonce <= 5 || diff >= 1) {
                 let title = getTitle(nonce, diff)
                 let token = ''
-                if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d')
+                try {
+                    if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d')
                     token = await utils.parseTransactionV2(transaction.data)
                 else if (transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad')
-                    token = await utils.parseTransactionV3(transaction.data)
+                    token = await utils.parseTransactionV3(transaction.data)  
+                } catch (error) {
+                    console.log('error parsing')
+                }
                 const [marketCap, tokenName, pairAddress] = await utils.getMarketCapV2(ctx, token[1])
                 if (marketCap > 200000) {
                     return
@@ -101,9 +105,23 @@ async function scanForApprovals(ctx, tx) {
                 const [mcap, tokenname, pair] = await utils.getMarketCapV2(ctx, tx.to)
                 if (mcap) break;
                 const token = tx.to
-                const request = `https://api.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=${token}&apikey=ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP`
-                const response = await axios.get(request)
-                const deployer = response.data.result[0].contractCreator.toLowerCase()
+                const mincontract = new ethers.Contract(token, MIN_ABI, provider)
+                const promises = [
+                    mincontract.owner(),
+                    mincontract._owner(),
+                    mincontract.Owner(),
+                    mincontract._Owner(),
+                ]
+    
+                let deployer = ''
+    
+                const runPromises = async () => {
+                    try {
+                        deployer = await Promise.race(promises)
+                    } catch (error) {}
+                }
+    
+                runPromises()
 
                 await queries.UpdateApproves(token, tokenname, deployer)
                 // check if the token is in the key:pair isInTable
@@ -169,16 +187,10 @@ function getTitle(nonce, diff) {
 
 async function sendMessage(ctx, message, pairAddress) {
 
-    // const menu = new Menu('root').text(
-    //     'Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`
-    // ).text('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`)
-    //     .text('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
-    //     .row().text('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`)
-    //     .text('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
-    //     .text('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`)
     const inlineKeyboard = new InlineKeyboard().url(
-        'Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`
-    ).url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`)
+        'Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`)
+        .url('Wallet', `https://cn.etherscan.com/address/${ctx.walletAddress}`)
+        .url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`)
         .url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
         .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`)
         .url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)

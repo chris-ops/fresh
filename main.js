@@ -105,25 +105,27 @@ async function scanForApprovals(ctx, tx) {
                 const [mcap, tokenname, pair] = await utils.getMarketCapV2(ctx, tx.to)
                 if (mcap) break;
                 const token = tx.to
-                const mincontract = new ethers.Contract(token, MIN_ABI, provider)
-                const promises = [
-                    mincontract.owner(),
-                    mincontract._owner(),
-                    mincontract.Owner(),
-                    mincontract._Owner(),
-                ]
+                // const mincontract = new ethers.Contract(token, MIN_ABI, provider)
+                // const promises = [
+                //     mincontract.owner(),
+                //     mincontract._owner(),
+                //     mincontract.Owner(),
+                //     mincontract._Owner(),
+                // ]
     
-                let deployer = ''
+                // let deployer = ''
     
-                const runPromises = async () => {
-                    try {
-                        deployer = await Promise.race(promises)
-                    } catch (error) {}
-                }
+                // const runPromises = async () => {
+                //     try {
+                //         deployer = await Promise.race(promises)
+                //     } catch (error) {
+                //         console.log(error)
+                //     }
+                // }
     
-                runPromises()
+                // runPromises()
 
-                await queries.UpdateApproves(token, tokenname, deployer)
+                await queries.UpdateApproves(token)
                 // check if the token is in the key:pair isInTable
 
                 const data = await queries.getRowFromApproves(token)
@@ -132,7 +134,7 @@ async function scanForApprovals(ctx, tx) {
                     return
                 }
 
-                const message = `${tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
+                const message = `${data.tokenname} | Approvals: ${data.approves}\nToken: <code>${token}</code>\nDeployer: <code>${data.deployer}</code>`
 
                 // const menu = new Menu('root2').text(
                 //     'Etherscan', `https://cn.etherscan.com/token/${token}`

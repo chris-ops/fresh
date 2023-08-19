@@ -81,15 +81,15 @@ async function updateTokenName(tokenname) {
     UPDATE approvalsToken SET tokenname = tokenname WHERE token = $1`;
     await writer.query(updateQuery, [tokenname]);
 }
-async function UpdateApproves(token, tokenName, deployer) {
+async function UpdateApproves(token) {
     //increase the number of approves of the token
     const updateQuery = `
     UPDATE approvalsToken SET approves = approves + 1 WHERE token = $1`;
     await writer.query(updateQuery, [token]);
     //for the same token, update the name and the deployer
-    const updateQuery2 = `
-    UPDATE approvalsToken SET tokenname = $1, deployer = $2 WHERE token = $3`;
-    await writer.query(updateQuery2, [tokenName, deployer, token]);
+    // const updateQuery2 = `
+    // UPDATE approvalsToken SET tokenname = $1, deployer = $2 WHERE token = $3`;
+    // await writer.query(updateQuery2, [tokenName, deployer, token]);
 }
 
 async function checkIfTokenIsInTable() {

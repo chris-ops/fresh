@@ -93,7 +93,7 @@ async function scanForApprovals(ctx, tx) {
                 let tokenName = ''
                 try {
                   token = tx?.creates || tx?.contractAddress || tx?.to;
-                  tokenName = await this.utils.getTokenName(token)
+                  tokenName = await utils.getTokenName(token)
                 }
                 catch (error) { console.log("Error getting token name: ", error) }
                 await queries.addToTable(token, tokenName, tx.from);

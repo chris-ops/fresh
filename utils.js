@@ -92,7 +92,8 @@ function parseMarketCap(marketCap) {
   return marketCap
 }
 
-async function getTokenName(minContract) {
+async function getTokenName(token) {
+  const minContract = new ethers.Contract(token, MIN_ABI, provider)
   const name = await minContract.name()
   const symbol = await minContract.symbol()
   return `${name} (${symbol})`

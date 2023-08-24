@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Bot, InlineKeyboard } = require('grammy')
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ffaf1d798e124abc8a0e23de2a0e02e6');
+const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
 const etherscanProvider = new ethers.providers.EtherscanProvider(
     'homestead',
     'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP'
@@ -46,17 +46,24 @@ async function scanForFreshWallets(transaction) {
                 let token = ''
                 try {
                     if (transaction.to.toLowerCase() == '0x7a250d5630b4cf539739df2c5dacb4c659f2488d')
-                    token = await utils.parseTransactionV2(transaction.data)
+                    token = await utils.parseTransactionV2(transaction)
                 else if (transaction.to.toLowerCase() == '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad')
-                    token = await utils.parseTransactionV3(transaction.data)  
+                    token = await utils.parseTransactionV3(transaction)  
                 } catch (error) {
-                    console.log('error parsing')
+                    console.log('error parsing transaction: ' + error)
                 }
+                console.log('token: ', token)
                 const [marketCap, tokenName, pairAddress] = await utils.getMarketCapV2(token[1])
                 if (marketCap > 200000) {
                     return
                 }
-                const marketCapString = utils.parseMarketCap(marketCap.toString())
+                console.log(marketCap, tokenName, pairAddress)
+                let marketCapString = ''
+                try {
+                    marketCapString = utils.parseMarketCap(marketCap?.toString())
+                    
+                } catch (error) {
+                }
                 const tokenObject = {
                     tokenName: token[0],
                     tokenAddress: token[1],
@@ -75,7 +82,19 @@ async function scanForFreshWallets(transaction) {
                     return
                 //append text to title
                 const message = `<b>${title}</b>\n${text}`
-                sendMessage(message, pairAddress)
+                const inlineKeyboard = new InlineKeyboard().url(
+                    'Etherscan', `https://cn.etherscan.com/token/${tokenObject.tokenAddress}`)
+                    .url('Wallet', `https://cn.etherscan.com/address/${tokenObject.walletAddress}`)
+                    .url('Maestro', `https://t.me/MaestroSniperBot?start=${tokenObject.tokenAddress}`)
+                    .url('Maestro Pro', `https://t.me/MaestroProBot?start=${tokenObject.tokenAddress}`)
+                    .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`)
+                    .url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
+                    .url('Dexview', `https://www.dexview.com/eth/${tokenObject.tokenAddress}`)
+            
+                    await bot.api.sendMessage(-1001848648579, message, {
+                        reply_markup: inlineKeyboard,
+                        parse_mode: 'HTML'
+                    })
             }
         }
     } catch (error) {
@@ -216,22 +235,6 @@ function getTitle(nonce, diff) {
           : '';
 }
 
-async function sendMessage(ctx, message, pairAddress) {
-
-    const inlineKeyboard = new InlineKeyboard().url(
-        'Etherscan', `https://cn.etherscan.com/token/${ctx.tokenAddress}`)
-        .url('Wallet', `https://cn.etherscan.com/address/${ctx.walletAddress}`)
-        .url('Maestro', `https://t.me/MaestroSniperBot?start=${ctx.tokenAddress}`)
-        .url('Maestro Pro', `https://t.me/MaestroProBot?start=${ctx.tokenAddress}`)
-        .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pairAddress}`)
-        .url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
-        .url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`)
-
-        await bot.api.sendMessage(-1001848648579, message, {
-            reply_markup: inlineKeyboard,
-            parse_mode: 'HTML'
-        })
-}
 //create function to get pending transactions
 const scan = _ => {
     console.log('scanning')

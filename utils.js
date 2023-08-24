@@ -16,12 +16,12 @@ const bignumber = require('bignumber.js')
 const INTERFACE_UNISWAP_V2 = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
 const INTERFACE_UNISWAP_V3 = new ethers.utils.Interface(UNISWAP_V3)
 
-async function mount_text(tokenObject, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
+async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
   queries.createOrUpdate(tokenAddress)
   const amount = await queries.queryAmount(tokenAddress)
   if (amount > 5)
     return 0
-  return `${tokenObject.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${tokenObject.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
+  return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
 }
 
 async function getMarketCapV2(token) {
@@ -99,18 +99,18 @@ async function getTokenName(token) {
   return `${name} (${symbol})`
 }
 
-async function parseTransactionV2(data) {
-  let match = INTERFACE_UNISWAP_V2.parseTransaction({ data: data })
+async function parseTransactionV2(tx) {
+  let match = INTERFACE_UNISWAP_V2.parseTransaction(tx)
   let token = match.args.path[1]
+
   if (token.toLowerCase() == WETH_ADDRESS)
     return
 
-  let minContract = new ethers.Contract(token, MIN_ABI, provider)
-  let tokenName = await getTokenName(minContract)
+  let tokenName = await getTokenName(token)
   return [tokenName, token]
 }
-async function parseTransactionV3(data) {
-  const match = INTERFACE_UNISWAP_V3.parseTransaction({ data: data })
+async function parseTransactionV3(tx) {
+  const match = INTERFACE_UNISWAP_V3.parseTransaction(tx)
   const splitData = splitStringV2(match.args.inputs[1])
   //get the last element of the array
   let tokenAddress = splitData[splitData.length - 1]
@@ -120,8 +120,7 @@ async function parseTransactionV3(data) {
   if (token.toLowerCase() == WETH_ADDRESS)
     return
 
-  const minContract = new ethers.Contract(token, MIN_ABI, provider)
-  const tokenName = await getTokenName(minContract)
+  const tokenName = await getTokenName(token)
   return [tokenName, token]
 }
 function splitStringV2(str) {
@@ -150,6 +149,7 @@ module.exports = {
   parseTransactionV2,
   parseTransactionV3,
   unixTimeToDays,
+  splitStringV2,
   getMarketCapV2,
   parseMarketCap,
 }

@@ -87,7 +87,7 @@ async function addToTable(token, tokenname, deployer, created_at) {
     INSERT INTO approvalsToken (token, tokenname, deployer, approves, created_at)
     VALUES ($1, $2, $3, $4, $5)
     `;
-    await writer.query(insertQuery, [token, tokenname, deployer, 0]);
+    await writer.query(insertQuery, [token, tokenname, deployer, 0, created_at]);
 }
 
 async function updateTokenName(tokenname) {
@@ -160,4 +160,5 @@ module.exports = {
     updateTokenName,
     updateSkip,
     zeroSkip,
+    getCreatedAt
 };

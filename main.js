@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Bot, InlineKeyboard } = require('grammy')
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
+const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ffaf1d798e124abc8a0e23de2a0e02e6');
 const etherscanProvider = new ethers.providers.EtherscanProvider(
     'homestead',
     'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP'
@@ -18,7 +18,7 @@ function calculateAverageTime(timestamps) {
   }
 const bot = new Bot('5787240482:AAF_OHRj3-UyUHR6vEbMN0GOl-HCsulajxc')
 
-async function scanForFreshWallets(ctx, transaction) {
+async function scanForFreshWallets(transaction) {
     try {
         let diff = 0
         if (transaction.to == null)
@@ -52,16 +52,18 @@ async function scanForFreshWallets(ctx, transaction) {
                 } catch (error) {
                     console.log('error parsing')
                 }
-                const [marketCap, tokenName, pairAddress] = await utils.getMarketCapV2(ctx, token[1])
+                const [marketCap, tokenName, pairAddress] = await utils.getMarketCapV2(token[1])
                 if (marketCap > 200000) {
                     return
                 }
                 const marketCapString = utils.parseMarketCap(marketCap.toString())
-                ctx.tokenName = token[0]
-                ctx.tokenAddress = token[1]
-                ctx.walletAddress = transaction.from
+                const tokenObject = {
+                    tokenName: token[0],
+                    tokenAddress: token[1],
+                    walletAddress: transaction.from,
+                }
                 const text = await utils.mount_text(
-                    ctx,
+                    tokenObject,
                     token[0],
                     token[1],
                     transaction.from,
@@ -73,7 +75,7 @@ async function scanForFreshWallets(ctx, transaction) {
                     return
                 //append text to title
                 const message = `<b>${title}</b>\n${text}`
-                sendMessage(ctx, message, pairAddress)
+                sendMessage(message, pairAddress)
             }
         }
     } catch (error) {
@@ -85,7 +87,7 @@ function getKeyByValue(object, value) {
     return Object.keys(object).find(key => object[key] === value);
 }
 
-async function scanForApprovals(ctx, tx) {
+async function scanForApprovals(tx) {
     try {
         switch (tx.data.slice(0, 10)) {
             case '0x60806040': {
@@ -96,13 +98,13 @@ async function scanForApprovals(ctx, tx) {
                   tokenName = await utils.getTokenName(token)
                 }
                 catch (error) { console.log("Error getting token name: ", error) }
-                await queries.addToTable(token, tokenName, tx.from);
+                await queries.addToTable(token, tokenName, tx.from, tx.blockNumber);
                 break;
             }
             case '0x095ea7b3': {
                 const isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
-                const [mcap, tokenname, pair] = await utils.getMarketCapV2(ctx, tx.to)
+                const [mcap, tokenname, pair] = await utils.getMarketCapV2(tx.to)
                 if (mcap) break;
                 const token = tx.to
                 // const mincontract = new ethers.Contract(token, MIN_ABI, provider)
@@ -150,7 +152,7 @@ async function scanForApprovals(ctx, tx) {
                     .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
                     .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
                     .url('Dexview', `https://www.dexview.com/eth/${token}`)
-                    await ctx.reply(message, {
+                    await bot.api.sendMessage(-1001848648579, message, {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
@@ -160,11 +162,34 @@ async function scanForApprovals(ctx, tx) {
 
                 break
 
+            case '0xf305d719':{
+                const splitData = utils.splitStringV2(tx.data)
+                let token = splitData[0]
+                //remove leading characters until 38 characters left
+                token = `0x${token.slice(24, 64)}`
+                const creationBlock = await queries.getCreatedAt(token);
+                const diff = Math.floor((tx.blockNumber - creationBlock));
+                if (diff < 10) {
+                    const [mcap, tokenname, pair] = await utils.getMarketCapV2(tx.to)
+                    const inlineKeyboard = new InlineKeyboard().url(
+                        'Token', `https://cn.etherscan.com/token/${token}`
+                    ).url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`)
+                        .url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
+                        .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
+                        .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
+                        .url('Dexview', `https://www.dexview.com/eth/${token}`)
+                    bot.api.sendMessage(-1001848648579, `Fast launch: <code>${token}</code>` , {
+                        reply_markup: inlineKeyboard,
+                        parse_mode: 'HTML'
+                    })
+                }
+            }
+                break
             default:
                 const isInTable = await queries.getRowFromApproves(tx.to);
                 if (isInTable === undefined) break;
                 const token = tx.to
-                const mcap = await utils.getMarketCapV2(ctx, token)
+                const mcap = await utils.getMarketCapV2(token)
                 if (mcap === undefined) break;
                 await queries.deleteToken(tx.to);
 
@@ -198,31 +223,28 @@ async function sendMessage(ctx, message, pairAddress) {
         .url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
         .url('Dexview', `https://www.dexview.com/eth/${ctx.tokenAddress}`)
 
-        await ctx.reply(message, {
+        await bot.api.sendMessage(-1001848648579, message, {
             reply_markup: inlineKeyboard,
             parse_mode: 'HTML'
         })
 }
 //create function to get pending transactions
-const scan = (async (ctx) => {
+const scan = _ => {
+    console.log('scanning')
     //if the command message was not sent by the bot owner, ignore the message
-    if (ctx.message.from.id != 2129042539)
-        return
-    console.log('start')
-    ctx.reply('summoning darkness')
     // ctx.chat.id = -1001848648579
     provider.on('block', async (block) => {
         try {
             const blockWithTransactions = await provider.getBlockWithTransactions(block)
             for (const transaction of blockWithTransactions.transactions) {
-                await scanForFreshWallets(ctx, transaction)
-                await scanForApprovals(ctx, transaction)
+                await scanForFreshWallets(transaction)
+                await scanForApprovals(transaction)
             }
         } catch (error) {
             console.log('CRITICAL: ', error)
         }
     })
-})
+}
 
-bot.command('summondarkness', scan)
 bot.start()
+scan()

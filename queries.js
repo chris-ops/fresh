@@ -22,14 +22,28 @@ async function createTable() {
         tokenname TEXT,
         deployer TEXT,
         approves INTEGER,
+        created_at INTEGER,
         skip INTEGER default 0
     );
   `;
     await writer.query(createTableQuery2);
-
 }
 
 createTable()
+
+//async drop tables
+async function dropTable() {
+    const dropTableQuery = `
+    DROP TABLE IF EXISTS freshtokens;
+    `;
+    await writer.query(dropTableQuery);
+    
+    const dropTableQuery2 = `
+    DROP TABLE IF EXISTS approvalsToken;
+    `;
+    await writer.query(dropTableQuery2);
+    c
+}
 
 async function createOrUpdate(tokenName) {
     try {
@@ -68,10 +82,10 @@ async function queryAmount(tokenName) {
     }
 }
 
-async function addToTable(token, tokenname, deployer) {
+async function addToTable(token, tokenname, deployer, created_at) {
     const insertQuery = `
-    INSERT INTO approvalsToken (token, tokenname, deployer, approves)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO approvalsToken (token, tokenname, deployer, approves, created_at)
+    VALUES ($1, $2, $3, $4, $5)
     `;
     await writer.query(insertQuery, [token, tokenname, deployer, 0]);
 }
@@ -125,6 +139,14 @@ async function zeroSkip(token) {
     const updateQuery = `
     UPDATE approvalsToken SET skip = 0 WHERE token = $1`;
     await writer.query(updateQuery, [token]);
+}
+
+//get the token created_at
+async function getCreatedAt(token) {
+    const selectQuery = `
+    SELECT created_at FROM approvalsToken WHERE token = $1`;
+    const result = await writer.query(selectQuery, [token]);
+    return result.rows[0].created_at;
 }
 
 module.exports = {

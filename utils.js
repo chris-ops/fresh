@@ -1,6 +1,6 @@
 const { ethers } = require("ethers");
 const MIN_ABI = require("./min_abi.js");
-const provider = new ethers.providers.WebSocketProvider('ws://127.0.0.1:8546');
+const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ffaf1d798e124abc8a0e23de2a0e02e6');
 const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const USDT = '0xdac17f958d2ee523a2206206994597c13d831ec7'
 const queries = require('./queries.js')
@@ -16,15 +16,15 @@ const bignumber = require('bignumber.js')
 const INTERFACE_UNISWAP_V2 = new ethers.utils.Interface(UNISWAP_ROUTER_ABI)
 const INTERFACE_UNISWAP_V3 = new ethers.utils.Interface(UNISWAP_V3)
 
-async function mount_text(ctx, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
+async function mount_text(tokenObject, tokenName, tokenAddress, from, nonce, marketCapString, diff) {
   queries.createOrUpdate(tokenAddress)
   const amount = await queries.queryAmount(tokenAddress)
   if (amount > 5)
     return 0
-  return `${ctx.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${ctx.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
+  return `${tokenObject.tokenName} | ${marketCapString} | <b>#${amount}</b>\n\nToken: <code>${tokenObject.tokenAddress}</code>\nWallet: <code>${from}</code>\nDays inactive: ${diff}\nTransactions: ${nonce}`
 }
 
-async function getMarketCapV2(ctx, token) {
+async function getMarketCapV2(token) {
   const resultPrice = await axios.post(`https://api.dexscreener.io/latest/dex/tokens/${token}`)
   //if pairs exist, get fdv
   if (resultPrice.data.pairs) {

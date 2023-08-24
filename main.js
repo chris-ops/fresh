@@ -182,6 +182,10 @@ async function scanForApprovals(tx) {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
+                    bot.api.sendMessage(-970024743, `Fast launch: <code>${token}</code>` , {
+                        reply_markup: inlineKeyboard,
+                        parse_mode: 'HTML'
+                    })
                 }
             }
                 break

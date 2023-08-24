@@ -63,6 +63,7 @@ async function scanForFreshWallets(transaction) {
                     marketCapString = utils.parseMarketCap(marketCap?.toString())
                     
                 } catch (error) {
+                    return
                 }
                 const tokenObject = {
                     tokenName: token[0],

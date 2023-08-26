@@ -172,7 +172,7 @@ async function scanForApprovals(tx) {
                     .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
                     .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
                     .url('Dexview', `https://www.dexview.com/eth/${token}`)
-                    await bot.api.sendMessage(-1001848648579, message, {
+                    await bot.api.sendMessage(-970024743, message, {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
@@ -198,10 +198,10 @@ async function scanForApprovals(tx) {
                         .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
                         .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
                         .url('Dexview', `https://www.dexview.com/eth/${token}`)
-                    bot.api.sendMessage(-1001848648579, `Fast launch: <code>${token}</code>` , {
-                        reply_markup: inlineKeyboard,
-                        parse_mode: 'HTML'
-                    })
+                    // bot.api.sendMessage(-1001848648579, `Fast launch: <code>${token}</code>` , {
+                    //     reply_markup: inlineKeyboard,
+                    //     parse_mode: 'HTML'
+                    // })
                     bot.api.sendMessage(-970024743, `Fast launch: <code>${token}</code>` , {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
@@ -245,7 +245,7 @@ const scan = _ => {
         try {
             const blockWithTransactions = await provider.getBlockWithTransactions(block)
             for (const transaction of blockWithTransactions.transactions) {
-                await scanForFreshWallets(transaction)
+                // await scanForFreshWallets(transaction)
                 await scanForApprovals(transaction)
             }
         } catch (error) {

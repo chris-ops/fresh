@@ -189,7 +189,7 @@ async function scanForApprovals(tx) {
                 token = `0x${token.slice(24, 64)}`
                 const creationBlock = await queries.getCreatedAt(token);
                 const diff = Math.floor((tx.blockNumber - creationBlock));
-                if (diff < 10) {
+                if (diff < 20) {
                     const [mcap, tokenname, pair] = await utils.getMarketCapV2(tx.to)
                     const inlineKeyboard = new InlineKeyboard().url(
                         'Token', `https://cn.etherscan.com/token/${token}`
@@ -198,10 +198,10 @@ async function scanForApprovals(tx) {
                         .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
                         .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
                         .url('Dexview', `https://www.dexview.com/eth/${token}`)
-                    // bot.api.sendMessage(-1001848648579, `Fast launch: <code>${token}</code>` , {
-                    //     reply_markup: inlineKeyboard,
-                    //     parse_mode: 'HTML'
-                    // })
+                    bot.api.sendMessage(-919232469, `Fast launch: <code>${token}</code>` , {
+                        reply_markup: inlineKeyboard,
+                        parse_mode: 'HTML'
+                    })
                     bot.api.sendMessage(-970024743, `Fast launch: <code>${token}</code>` , {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'

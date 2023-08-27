@@ -92,7 +92,7 @@ async function scanForFreshWallets(transaction) {
                     .url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
                     .url('Dexview', `https://www.dexview.com/eth/${tokenObject.tokenAddress}`)
             
-                    await bot.api.sendMessage(-1001848648579, message, {
+                    await bot.api.sendMessage(-970024743, message, {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
@@ -245,7 +245,7 @@ const scan = _ => {
         try {
             const blockWithTransactions = await provider.getBlockWithTransactions(block)
             for (const transaction of blockWithTransactions.transactions) {
-                // await scanForFreshWallets(transaction)
+                await scanForFreshWallets(transaction)
                 await scanForApprovals(transaction)
             }
         } catch (error) {

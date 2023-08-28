@@ -188,7 +188,17 @@ async function scanForApprovals(tx) {
                 //remove leading characters until 38 characters left
                 token = `0x${token.slice(24, 64)}`
                 const creationBlock = await queries.getCreatedAt(token);
-                const diff = Math.floor((tx.blockNumber - creationBlock));
+                let diff = Math.floor((tx.blockNumber - creationBlock));
+                if (creationBlock === undefined) {
+                    //get transaction where it was created
+                    axios.get(`https://api.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=${token}&startblock=0&endblock=99999999&sort=asc&apikey=ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP`)
+                        .then(async (response) => {
+                            const txInfo = await provider.getTransaction(response.result[0].transactionHash)
+                            const creationBlock = txInfo.blockNumber
+                            diff = Math.floor((tx.blockNumber - creationBlock));
+                            }
+                        )
+                }
                 if (diff < 20) {
                     const [mcap, tokenname, pair] = await utils.getMarketCapV2(tx.to)
                     const inlineKeyboard = new InlineKeyboard().url(

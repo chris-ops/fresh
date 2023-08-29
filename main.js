@@ -188,7 +188,7 @@ async function scanForApprovals(tx) {
                 //remove leading characters until 38 characters left
                 token = `0x${token.slice(24, 64)}`
                 const creationBlock = await queries.getCreatedAt(token);
-                let diff = Math.floor((tx.blockNumber - creationBlock));
+                let diff = (tx.blockNumber - creationBlock);
                 if (creationBlock === undefined) {
                     //get transaction where it was created
                     axios.get(`https://api.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=${token}&startblock=0&endblock=99999999&sort=asc&apikey=ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP`)
@@ -199,20 +199,25 @@ async function scanForApprovals(tx) {
                             }
                         )
                 }
+                const inlineKeyboard = new InlineKeyboard().url(
+                    'Token', `https://cn.etherscan.com/token/${token}`
+                ).url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`)
+                    .url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
+                    .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
+                    .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
+                    .url('Dexview', `https://www.dexview.com/eth/${token}`)
+                bot.api.sendMessage(-919232469, `Fast launch: <code>${token}</code>` , {
+                    reply_markup: inlineKeyboard,
+                    parse_mode: 'HTML'
+                })
                 if (diff < 20) {
-                    const [mcap, tokenname, pair] = await utils.getMarketCapV2(tx.to)
-                    const inlineKeyboard = new InlineKeyboard().url(
-                        'Token', `https://cn.etherscan.com/token/${token}`
-                    ).url('Maestro', `https://t.me/MaestroSniperBot?start=${token}`)
-                        .url('Maestro Pro', `https://t.me/MaestroProBot?start=${token}`)
-                        .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
-                        .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
-                        .url('Dexview', `https://www.dexview.com/eth/${token}`)
-                    bot.api.sendMessage(-919232469, `Fast launch: <code>${token}</code>` , {
+                    bot.api.sendMessage(-970024743, `Fast launch: <code>${token}</code>\nLaunched in ${diff} blocks` , {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
-                    bot.api.sendMessage(-970024743, `Fast launch: <code>${token}</code>` , {
+                }
+                else {
+                    bot.api.sendMessage(-970024743, `Slow launch: <code>${token}</code>\nLaunched in ${diff} blocks` , {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })

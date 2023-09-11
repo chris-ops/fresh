@@ -1,6 +1,6 @@
 const { ethers } = require("ethers");
 const MIN_ABI = require("./min_abi.js");
-const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ffaf1d798e124abc8a0e23de2a0e02e6');
+const provider = new ethers.providers.WebSocketProvider('wss://greatest-smart-bush.discover.quiknode.pro/');
 const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const USDT = '0xdac17f958d2ee523a2206206994597c13d831ec7'
 const queries = require('./queries.js')

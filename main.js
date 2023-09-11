@@ -92,7 +92,7 @@ async function scanForFreshWallets(transaction) {
                     .url('Dexscreener', `https://dexscreener.com/ethereum/${pairAddress}`)
                     .url('Dexview', `https://www.dexview.com/eth/${tokenObject.tokenAddress}`)
             
-                    await bot.api.sendMessage(-970024743, message, {
+                    await bot.api.sendMessage(-1001912097339, message, {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
@@ -172,7 +172,7 @@ async function scanForApprovals(tx) {
                     .row().url('Dextools', `https://www.dextools.io/app/en/ether/pair-explorer/${pair}`)
                     .url('Dexscreener', `https://dexscreener.com/ethereum/${pair}`)
                     .url('Dexview', `https://www.dexview.com/eth/${token}`)
-                    await bot.api.sendMessage(-970024743, message, {
+                    await bot.api.sendMessage(-1001912097339, message, {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
@@ -211,13 +211,13 @@ async function scanForApprovals(tx) {
                     parse_mode: 'HTML'
                 })
                 if (diff < 20) {
-                    bot.api.sendMessage(-970024743, `Fast launch: <code>${token}</code>\nLaunched in ${diff} blocks` , {
+                    bot.api.sendMessage(-1001912097339, `Fast launch: <code>${token}</code>\nLaunched in ${diff} blocks` , {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })
                 }
                 else {
-                    bot.api.sendMessage(-970024743, `Slow launch: <code>${token}</code>\nLaunched in ${diff} blocks` , {
+                    bot.api.sendMessage(-1001912097339, `Slow launch: <code>${token}</code>\nLaunched in ${diff} blocks` , {
                         reply_markup: inlineKeyboard,
                         parse_mode: 'HTML'
                     })

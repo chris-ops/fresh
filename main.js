@@ -3,7 +3,7 @@ const utils = require('./utils.js')
 const { Bot, InlineKeyboard } = require('grammy')
 const queries = require('./queries.js')
 const axios = require('axios')
-const provider = new ethers.providers.WebSocketProvider('wss://smart-solitary-pallet.quiknode.pro/84b7114e71b6057a8dc8adc02f8f091460be4612/');
+const provider = new ethers.providers.WebSocketProvider('wss://hidden-powerful-county.quiknode.pro/3030056d4839615f07cb54b5c05a5c183b5821c1/');
 const etherscanProvider = new ethers.providers.EtherscanProvider(
     'homestead',
     'ADITHDAHJGR15JV5FMB4C18JBVPINZ2UDP'

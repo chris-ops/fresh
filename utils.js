@@ -1,6 +1,6 @@
 const { ethers } = require("ethers");
 const MIN_ABI = require("./min_abi.js");
-const provider = new ethers.providers.WebSocketProvider('wss://greatest-smart-bush.discover.quiknode.pro/');
+const provider = new ethers.providers.WebSocketProvider('wss://hidden-powerful-county.quiknode.pro/3030056d4839615f07cb54b5c05a5c183b5821c1/');
 const WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 const USDT = '0xdac17f958d2ee523a2206206994597c13d831ec7'
 const queries = require('./queries.js')
